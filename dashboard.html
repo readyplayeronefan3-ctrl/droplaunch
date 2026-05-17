@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DropLaunch — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090B;
+  --mid:#0F0F11;
+  --card:#141416;
+  --card2:#191920;
+  --white:#F4F4F0;
+  --muted:#5A5A55;
+  --muted2:#3A3A36;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);
+  --accent:#C8F135;
+  --accent-t:#09090B;
+  --accent-dim:rgba(200,241,53,0.1);
+  --accent-border:rgba(200,241,53,0.22);
+  --green:#4ade80;
+  --red:#FF5C3A;
+  --blue:#5B9FFF;
+  --yellow:#FFBE0B;
+  --font-d:'Syne',sans-serif;
+  --font-b:'DM Sans',sans-serif;
+  --r:10px;
+  --r-sm:7px;
+  --r-lg:14px;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--white);font-family:var(--font-b);font-size:14px;display:flex;flex-direction:column}
+
+/* TOPBAR */
+.topbar{height:54px;flex-shrink:0;display:flex;align-items:center;padding:0 20px;background:var(--mid);border-bottom:1px solid var(--border);gap:16px;z-index:50}
+.logo{font-family:var(--font-d);font-size:18px;font-weight:800;letter-spacing:-.04em;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;box-shadow:0 0 8px rgba(200,241,53,0.5)}
+.topbar-search{flex:1;max-width:380px;position:relative}
+.topbar-search input{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:var(--r-sm);padding:8px 14px 8px 36px;color:var(--white);font-family:var(--font-b);font-size:13px;outline:none;transition:border-color .2s}
+.topbar-search input::placeholder{color:var(--muted)}
+.topbar-search input:focus{border-color:rgba(200,241,53,0.35)}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.notif-btn{position:relative;background:rgba(255,255,255,0.06);border:1px solid var(--border);width:34px;height:34px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:background .15s}
+.notif-btn:hover{background:rgba(255,255,255,0.1)}
+.notif-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.plan-chip{background:var(--accent-dim);border:1px solid var(--accent-border);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;white-space:nowrap}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#C8F135,#5B9FFF);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;font-family:var(--font-d);color:#000;cursor:pointer;flex-shrink:0}
+
+/* LAYOUT */
+.app-body{flex:1;display:flex;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:220px;min-width:220px;flex-shrink:0;background:var(--mid);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 10px;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+.sb-section{margin-bottom:24px}
+.sb-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0 8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--muted);transition:all .15s;border:1px solid transparent;margin-bottom:2px;user-select:none}
+.nav-item:hover{color:var(--white);background:rgba(255,255,255,0.05)}
+.nav-item.active{color:var(--white);background:rgba(255,255,255,0.08);border-color:var(--border)}
+.ni-icon{font-size:15px;width:18px;text-align:center}
+.ni-label{flex:1}
+.ni-badge{background:var(--accent);color:var(--accent-t);font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px}
+.ni-badge.red{background:var(--red);color:#fff}
+
+.store-switcher{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;cursor:pointer;transition:border-color .15s;margin-bottom:8px}
+.store-switcher:hover{border-color:var(--border2)}
+.ss-name{font-size:13px;font-weight:500;color:var(--white);margin-bottom:2px}
+.ss-url{font-size:11px;color:var(--muted)}
+.ss-status{display:flex;align-items:center;gap:5px;margin-top:6px;font-size:11px}
+.ss-dot{width:6px;height:6px;border-radius:50%}
+.ss-dot.live{background:var(--green);box-shadow:0 0 5px rgba(74,222,128,.4)}
+.ss-dot.draft{background:var(--muted)}
+.add-store-btn{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--muted);border:1px dashed var(--muted2);transition:all .15s;margin-top:4px}
+.add-store-btn:hover{color:var(--accent);border-color:var(--accent-border);background:var(--accent-dim)}
+
+.usage-bar-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px}
+.ub-label{font-size:11px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between}
+.ub-label span{color:var(--white);font-weight:500}
+.ub-track{height:4px;background:var(--muted2);border-radius:2px;margin-bottom:8px}
+.ub-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .6s ease}
+.upgrade-btn{width:100%;background:var(--accent);color:var(--accent-t);border:none;padding:9px;border-radius:var(--r-sm);font-family:var(--font-b);font-size:12px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.upgrade-btn:hover{opacity:.85}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px}
+.main::-webkit-scrollbar{width:5px}
+.main::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:3px}
+
+/* PAGE SECTIONS */
+.page{display:none}
+.page.active{display:contents}
+
+/* SECTION HEADER */
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-hdr h2{font-family:var(--font-d);font-size:20px;font-weight:700;letter-spacing:-.03em}
+.section-hdr p{font-size:13px;color:var(--muted);margin-top:2px}
+
+/* GREETING */
+.greeting-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.greeting h1{font-family:var(--font-d);font-size:26px;font-weight:800;letter-spacing:-.04em;line-height:1.1}
+.greeting h1 span{color:var(--accent)}
+.greeting p{font-size:14px;color:var(--muted);margin-top:6px;font-weight:300}
+.greeting-actions{display:flex;gap:8px;flex-shrink:0}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 18px 14px;transition:border-color .2s,transform .2s}
+.kpi-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.kpi-icon{width:36px;height:36px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:14px}
+.kpi-val{font-family:var(--font-d);font-size:28px;font-weight:800;letter-spacing:-.04em;color:var(--white);line-height:1;margin-bottom:4px}
+.kpi-label{font-size:12px;color:var(--muted);margin-bottom:8px}
+.kpi-delta{font-size:12px;font-weight:500;display:flex;align-items:center;gap:4px}
+.kpi-delta.up{color:var(--green)}
+.kpi-delta.down{color:var(--red)}
+.kpi-delta.flat{color:var(--muted)}
+
+/* CHART AREA */
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px}
+.chart-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.chart-title{font-family:var(--font-d);font-size:15px;font-weight:700}
+.chart-tabs{display:flex;gap:4px}
+.chart-tab{padding:5px 12px;border-radius:100px;font-size:12px;cursor:pointer;color:var(--muted);border:1px solid transparent;transition:all .15s}
+.chart-tab:hover{color:var(--white)}
+.chart-tab.active{background:rgba(255,255,255,0.09);border-color:var(--border2);color:var(--white)}
+.chart-svg-wrap{height:180px;position:relative}
+svg.chart{width:100%;height:100%}
+.chart-label{font-size:10px;fill:var(--muted)}
+.chart-line-revenue{fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chart-area-revenue{fill:url(#rev-grad);opacity:.35}
+.chart-line-orders{fill:none;stroke:var(--blue);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chart-area-orders{fill:url(#ord-grad);opacity:.25}
+.chart-legend{display:flex;gap:16px;margin-top:12px}
+.cl-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.cl-dot{width:8px;height:8px;border-radius:50%}
+
+/* 2-col grid */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:start}
+
+/* STORES LIST */
+.stores-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.stores-card-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.stores-card-hdr h3{font-family:var(--font-d);font-size:14px;font-weight:700}
+.store-row{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer}
+.store-row:last-child{border-bottom:none}
+.store-row:hover{background:rgba(255,255,255,0.02)}
+.store-thumb{width:44px;height:44px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:1px solid var(--border2)}
+.store-info{flex:1;min-width:0}
+.store-name{font-size:13px;font-weight:500;color:var(--white);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.store-domain{font-size:11px;color:var(--muted)}
+.store-stats{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-top:4px}
+.store-stats span{white-space:nowrap}
+.store-badge{padding:3px 9px;border-radius:100px;font-size:10px;font-weight:600;white-space:nowrap}
+.sb-live{background:rgba(74,222,128,0.12);color:var(--green)}
+.sb-draft{background:rgba(255,255,255,0.07);color:var(--muted)}
+.sb-paused{background:rgba(255,190,11,0.12);color:var(--yellow)}
+.store-actions{display:flex;gap:6px}
+.icon-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 9px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .15s;font-family:var(--font-b)}
+.icon-btn:hover{color:var(--white);border-color:var(--border2)}
+
+/* ORDERS */
+.orders-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.orders-card-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.orders-card-hdr h3{font-family:var(--font-d);font-size:14px;font-weight:700}
+.order-row{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);transition:background .15s}
+.order-row:last-child{border-bottom:none}
+.order-row:hover{background:rgba(255,255,255,0.02)}
+.order-id{font-size:12px;color:var(--muted);width:72px;flex-shrink:0;font-family:monospace}
+.order-product{flex:1;min-width:0}
+.order-name{font-size:13px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.order-customer{font-size:11px;color:var(--muted)}
+.order-amount{font-size:14px;font-weight:500;color:var(--white);font-family:var(--font-d);letter-spacing:-.02em;white-space:nowrap}
+.order-status{padding:3px 10px;border-radius:100px;font-size:11px;font-weight:500;white-space:nowrap}
+.os-paid{background:rgba(74,222,128,0.12);color:var(--green)}
+.os-pending{background:rgba(255,190,11,0.12);color:var(--yellow)}
+.os-shipped{background:rgba(91,159,255,0.12);color:var(--blue)}
+.os-refund{background:rgba(255,92,58,0.12);color:var(--red)}
+
+/* SOCIAL MINI */
+.social-mini{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px}
+.sm-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sm-hdr h3{font-family:var(--font-d);font-size:14px;font-weight:700}
+.sm-platform{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.sm-platform:hover{border-color:var(--border2)}
+.sm-platform:last-child{margin-bottom:0}
+.sm-icon{font-size:20px}
+.sm-info{flex:1}
+.sm-name{font-size:12px;font-weight:500;color:var(--white)}
+.sm-val{font-size:11px;color:var(--muted)}
+.sm-bar-wrap{width:60px}
+.sm-bar{height:3px;background:var(--muted2);border-radius:2px}
+.sm-bar-fill{height:100%;border-radius:2px}
+
+/* ACTIVITY FEED */
+.activity-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px}
+.activity-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.activity-hdr h3{font-family:var(--font-d);font-size:14px;font-weight:700}
+.activity-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.activity-item:last-child{border-bottom:none}
+.ai-dot-wrap{display:flex;flex-direction:column;align-items:center;gap:0;padding-top:3px}
+.ai-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ai-line{width:1px;flex:1;background:var(--border);margin-top:4px}
+.activity-item:last-child .ai-line{display:none}
+.ai-content{flex:1;min-width:0}
+.ai-text{font-size:13px;color:var(--white);line-height:1.5}
+.ai-text strong{font-weight:500}
+.ai-time{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* QUICK ACTIONS */
+.qa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.qa-btn{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;transition:all .2s;text-align:center}
+.qa-btn:hover{border-color:var(--accent-border);background:var(--accent-dim);transform:translateY(-2px)}
+.qa-icon{font-size:26px}
+.qa-label{font-size:12px;font-weight:500;color:var(--white)}
+.qa-desc{font-size:11px;color:var(--muted);line-height:1.4}
+
+/* NOTIFICATION PANEL */
+.notif-panel{position:fixed;top:54px;right:0;width:340px;height:calc(100vh - 54px);background:var(--mid);border-left:1px solid var(--border);z-index:100;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;overflow:hidden}
+.notif-panel.open{transform:translateX(0)}
+.np-hdr{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.np-hdr h3{font-family:var(--font-d);font-size:15px;font-weight:700}
+.np-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:2px 6px;border-radius:4px}
+.np-close:hover{color:var(--white);background:rgba(255,255,255,0.08)}
+.notif-list{overflow-y:auto;flex:1;padding:12px}
+.notif-list::-webkit-scrollbar{width:3px}
+.notif-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+.notif-item{display:flex;gap:12px;padding:12px;border-radius:var(--r);margin-bottom:6px;cursor:pointer;transition:background .15s;border:1px solid transparent}
+.notif-item:hover{background:rgba(255,255,255,0.04);border-color:var(--border)}
+.notif-item.unread{background:var(--accent-dim);border-color:var(--accent-border)}
+.ni-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.ni-body{flex:1;min-width:0}
+.ni-msg{font-size:13px;color:var(--white);line-height:1.4}
+.ni-ts{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* SETTINGS PAGE */
+.settings-grid{display:flex;flex-direction:column;gap:16px}
+.settings-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.sc-hdr{padding:16px 20px;border-bottom:1px solid var(--border)}
+.sc-hdr h3{font-family:var(--font-d);font-size:14px;font-weight:700}
+.sc-hdr p{font-size:12px;color:var(--muted);margin-top:2px}
+.sc-body{padding:20px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-row.single{grid-template-columns:1fr}
+.field-group label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.field-group input,.field-group select,.field-group textarea{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:var(--r-sm);padding:9px 12px;color:var(--white);font-family:var(--font-b);font-size:13px;outline:none;transition:border-color .2s}
+.field-group input:focus,.field-group select:focus{border-color:rgba(200,241,53,0.35)}
+.field-group select option{background:var(--card)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none;padding-bottom:0}
+.toggle-info h4{font-size:13px;font-weight:500;color:var(--white)}
+.toggle-info p{font-size:12px;color:var(--muted);margin-top:2px}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--muted2);border-radius:100px;cursor:pointer;transition:.2s}
+.toggle-slider::before{content:'';position:absolute;left:3px;top:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:.2s}
+.toggle input:checked+.toggle-slider{background:var(--accent)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(18px);background:var(--accent-t)}
+.save-btn{background:var(--accent);color:var(--accent-t);border:none;padding:10px 24px;border-radius:var(--r-sm);font-family:var(--font-b);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.save-btn:hover{opacity:.85}
+
+/* PLAN PAGE */
+.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.plan-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:24px;transition:transform .2s}
+.plan-card:hover{transform:translateY(-2px)}
+.plan-card.current{border-color:var(--accent-border);background:var(--accent-dim)}
+.plan-tag{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.plan-price{font-family:var(--font-d);font-size:36px;font-weight:800;letter-spacing:-.05em;color:var(--white);line-height:1;margin-bottom:4px}
+.plan-price span{font-size:15px;font-weight:400;color:var(--muted);letter-spacing:0}
+.plan-desc{font-size:13px;color:var(--muted);margin-bottom:18px;font-weight:300}
+.plan-divider{border:none;border-top:1px solid var(--border);margin-bottom:16px}
+.plan-feats{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:22px}
+.plan-feats li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--white);font-weight:300}
+.pf-check{color:var(--green);font-size:14px}
+.pf-x{color:var(--muted);font-size:14px}
+.plan-btn{width:100%;padding:11px;border-radius:var(--r-sm);font-family:var(--font-b);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
+.plan-btn-ghost{background:none;border:1px solid var(--border);color:var(--white)}
+.plan-btn-ghost:hover{border-color:var(--border2);background:rgba(255,255,255,0.05)}
+.plan-btn-fill{background:var(--accent);color:var(--accent-t);border:none}
+.plan-btn-fill:hover{opacity:.85}
+.current-badge{background:var(--accent);color:var(--accent-t);font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;float:right;margin-top:-2px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:12px 18px;font-size:13px;color:var(--white);display:flex;align-items:center;gap:10px;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s ease;pointer-events:none;max-width:360px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:rgba(74,222,128,.3)}
+.toast.error{border-color:rgba(255,92,58,.3)}
+
+/* animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.fade-up{animation:fadeUp .4s ease both}
+.fade-up-1{animation-delay:.05s}
+.fade-up-2{animation-delay:.1s}
+.fade-up-3{animation-delay:.15s}
+.fade-up-4{animation-delay:.2s}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo"><span class="logo-dot"></span>DropLaunch</div>
+  <div class="topbar-search">
+    <span class="search-icon">🔍</span>
+    <input type="text" placeholder="Search stores, orders, posts…" />
+  </div>
+  <div class="topbar-right">
+    <span class="plan-chip">⚡ Pro Plan</span>
+    <div class="notif-btn" onclick="toggleNotifPanel()">🔔<span class="notif-badge">3</span></div>
+    <div class="avatar" onclick="showPage('settings')">JD</div>
+  </div>
+</div>
+
+<div class="app-body">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-section">
+      <div class="sb-label">Navigation</div>
+      <div class="nav-item active" onclick="showPage('overview',this)"><span class="ni-icon">⚡</span><span class="ni-label">Overview</span></div>
+      <div class="nav-item" onclick="showPage('stores',this)"><span class="ni-icon">🏪</span><span class="ni-label">My Stores</span></div>
+      <div class="nav-item" onclick="showPage('social',this)"><span class="ni-icon">📡</span><span class="ni-label">Social Hub</span></div>
+      <div class="nav-item" onclick="showPage('orders',this)"><span class="ni-icon">📦</span><span class="ni-label">Orders</span><span class="ni-badge red">12</span></div>
+      <div class="nav-item" onclick="showPage('analytics',this)"><span class="ni-icon">📊</span><span class="ni-label">Analytics</span></div>
+      <div class="nav-item" onclick="showPage('settings',this)"><span class="ni-icon">⚙️</span><span class="ni-label">Settings</span></div>
+      <div class="nav-item" onclick="showPage('plan',this)"><span class="ni-icon">💳</span><span class="ni-label">Plan & Billing</span></div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Stores</div>
+      <div class="store-switcher" onclick="showToast('🏪 Switched to VOID Cases','success')">
+        <div class="ss-name">VOID Cases™</div>
+        <div class="ss-url">voidcases.droplaunch.app</div>
+        <div class="ss-status"><div class="ss-dot live"></div><span style="color:#4ade80;font-size:11px">Live</span></div>
+      </div>
+      <div class="store-switcher" onclick="showToast('🏪 Switched to Lumos Candles','success')">
+        <div class="ss-name">Lumos Candles</div>
+        <div class="ss-url">lumos.droplaunch.app</div>
+        <div class="ss-status"><div class="ss-dot draft"></div><span style="color:var(--muted);font-size:11px">Draft</span></div>
+      </div>
+      <div class="add-store-btn" onclick="showToast('⚡ Opening AI builder…','success')">
+        <span style="font-size:16px">＋</span> New store
+      </div>
+    </div>
+
+    <div class="sb-section" style="margin-top:auto">
+      <div class="usage-bar-wrap">
+        <div class="ub-label">Stores used <span>2 / 5</span></div>
+        <div class="ub-track"><div class="ub-fill" style="width:40%"></div></div>
+        <div class="ub-label" style="margin-top:-2px">Posts this month <span>34 / ∞</span></div>
+        <div class="ub-track"><div class="ub-fill" style="width:22%"></div></div>
+        <button class="upgrade-btn" onclick="showPage('plan')">⬆ Upgrade to Agency</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main" id="main-content">
+
+    <!-- ════════ OVERVIEW PAGE ════════ -->
+    <div class="page active" id="page-overview">
+
+      <div class="greeting-row fade-up">
+        <div class="greeting">
+          <h1>Good morning, <span>Jordan</span> 👋</h1>
+          <p>Here's how your business is performing today — Sunday, May 17</p>
+        </div>
+        <div class="greeting-actions">
+          <button class="icon-btn" onclick="showPage('stores')">🏪 My Stores</button>
+          <button style="background:var(--accent);color:var(--accent-t);border:none;padding:9px 18px;border-radius:var(--r-sm);font-family:var(--font-b);font-size:13px;font-weight:500;cursor:pointer" onclick="showToast('⚡ Opening AI builder…','success')">⚡ New Store</button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid fade-up fade-up-1">
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(200,241,53,0.12)">💰</div>
+          <div class="kpi-val">$4,821</div>
+          <div class="kpi-label">Revenue this month</div>
+          <div class="kpi-delta up">↑ 23% vs last month</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(91,159,255,0.12)">📦</div>
+          <div class="kpi-val">147</div>
+          <div class="kpi-label">Orders this month</div>
+          <div class="kpi-delta up">↑ 11% vs last month</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(255,45,85,0.12)">👁</div>
+          <div class="kpi-val">43.6K</div>
+          <div class="kpi-label">Social views this week</div>
+          <div class="kpi-delta up">↑ 18% vs last week</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(74,222,128,0.12)">🔄</div>
+          <div class="kpi-val">4.8%</div>
+          <div class="kpi-label">Conversion rate</div>
+          <div class="kpi-delta up">↑ 0.6% vs last month</div>
+        </div>
+      </div>
+
+      <!-- Chart + Activity -->
+      <div class="two-col fade-up fade-up-2">
+        <div class="chart-card">
+          <div class="chart-hdr">
+            <div class="chart-title">Revenue & Orders</div>
+            <div class="chart-tabs">
+              <div class="chart-tab active" onclick="setChartTab(this,'7d')">7d</div>
+              <div class="chart-tab" onclick="setChartTab(this,'30d')">30d</div>
+              <div class="chart-tab" onclick="setChartTab(this,'90d')">90d</div>
+            </div>
+          </div>
+          <div class="chart-svg-wrap">
+            <svg class="chart" viewBox="0 0 520 160" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="rev-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#C8F135"/>
+                  <stop offset="100%" stop-color="#C8F135" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="ord-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#5B9FFF"/>
+                  <stop offset="100%" stop-color="#5B9FFF" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <!-- Y axis labels -->
+              <text x="0" y="15" class="chart-label">$800</text>
+              <text x="0" y="55" class="chart-label">$600</text>
+              <text x="0" y="95" class="chart-label">$400</text>
+              <text x="0" y="135" class="chart-label">$200</text>
+              <!-- Grid lines -->
+              <line x1="36" y1="10" x2="520" y2="10" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+              <line x1="36" y1="50" x2="520" y2="50" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+              <line x1="36" y1="90" x2="520" y2="90" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+              <line x1="36" y1="130" x2="520" y2="130" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+              <!-- Revenue area -->
+              <path class="chart-area-revenue" d="M40,110 C80,100 120,90 160,70 C200,50 240,80 280,60 C320,40 360,55 400,30 C440,15 480,20 520,10 L520,150 L40,150 Z"/>
+              <path class="chart-line-revenue" d="M40,110 C80,100 120,90 160,70 C200,50 240,80 280,60 C320,40 360,55 400,30 C440,15 480,20 520,10"/>
+              <!-- Orders area -->
+              <path class="chart-area-orders" d="M40,130 C80,125 120,120 160,115 C200,110 240,118 280,108 C320,98 360,105 400,90 C440,80 480,85 520,75 L520,150 L40,150 Z"/>
+              <path class="chart-line-orders" d="M40,130 C80,125 120,120 160,115 C200,110 240,118 280,108 C320,98 360,105 400,90 C440,80 480,85 520,75"/>
+              <!-- X axis labels -->
+              <text x="40" y="155" class="chart-label" text-anchor="middle">Mon</text>
+              <text x="120" y="155" class="chart-label" text-anchor="middle">Tue</text>
+              <text x="200" y="155" class="chart-label" text-anchor="middle">Wed</text>
+              <text x="280" y="155" class="chart-label" text-anchor="middle">Thu</text>
+              <text x="360" y="155" class="chart-label" text-anchor="middle">Fri</text>
+              <text x="440" y="155" class="chart-label" text-anchor="middle">Sat</text>
+              <text x="520" y="155" class="chart-label" text-anchor="middle">Sun</text>
+            </svg>
+          </div>
+          <div class="chart-legend">
+            <div class="cl-item"><div class="cl-dot" style="background:var(--accent)"></div>Revenue</div>
+            <div class="cl-item"><div class="cl-dot" style="background:var(--blue)"></div>Orders</div>
+          </div>
+        </div>
+
+        <div class="activity-card">
+          <div class="activity-hdr">
+            <h3>Recent Activity</h3>
+            <span style="font-size:12px;color:var(--muted);cursor:pointer" onclick="showPage('orders')">View all →</span>
+          </div>
+          <div class="activity-item">
+            <div class="ai-dot-wrap"><div class="ai-dot" style="background:var(--green)"></div><div class="ai-line"></div></div>
+            <div class="ai-content"><div class="ai-text"><strong>New order</strong> — VOID Cases™ · Clear Case × 2</div><div class="ai-time">2 min ago · $49.98</div></div>
+          </div>
+          <div class="activity-item">
+            <div class="ai-dot-wrap"><div class="ai-dot" style="background:var(--accent)"></div><div class="ai-line"></div></div>
+            <div class="ai-content"><div class="ai-text"><strong>TikTok post</strong> reached 8.2K views in 1 hour</div><div class="ai-time">1 hr ago</div></div>
+          </div>
+          <div class="activity-item">
+            <div class="ai-dot-wrap"><div class="ai-dot" style="background:var(--blue)"></div><div class="ai-line"></div></div>
+            <div class="ai-content"><div class="ai-text"><strong>New order</strong> — VOID Cases™ · MagSafe Wallet</div><div class="ai-time">3 hr ago · $19.99</div></div>
+          </div>
+          <div class="activity-item">
+            <div class="ai-dot-wrap"><div class="ai-dot" style="background:var(--yellow)"></div><div class="ai-line"></div></div>
+            <div class="ai-content"><div class="ai-text"><strong>Low stock alert</strong> — Frosted Case running out</div><div class="ai-time">5 hr ago</div></div>
+          </div>
+          <div class="activity-item">
+            <div class="ai-dot-wrap"><div class="ai-dot" style="background:var(--green)"></div><div class="ai-line"></div></div>
+            <div class="ai-content"><div class="ai-text"><strong>3 new orders</strong> — VOID Cases™ bulk order</div><div class="ai-time">Yesterday · $134.95</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="fade-up fade-up-3">
+        <div style="font-family:var(--font-d);font-size:15px;font-weight:700;margin-bottom:12px">Quick Actions</div>
+        <div class="qa-grid">
+          <div class="qa-btn" onclick="showToast('⚡ Opening AI builder…','success')">
+            <div class="qa-icon">⚡</div>
+            <div class="qa-label">Build New Store</div>
+            <div class="qa-desc">AI creates your full store in 45 seconds</div>
+          </div>
+          <div class="qa-btn" onclick="window.location='social-hub.html'">
+            <div class="qa-icon">📡</div>
+            <div class="qa-label">Post to Social</div>
+            <div class="qa-desc">TikTok, YouTube & Reels at once</div>
+          </div>
+          <div class="qa-btn" onclick="showPage('orders')">
+            <div class="qa-icon">📦</div>
+            <div class="qa-label">View Orders</div>
+            <div class="qa-desc">12 new orders need attention</div>
+          </div>
+          <div class="qa-btn" onclick="showPage('analytics')">
+            <div class="qa-icon">📊</div>
+            <div class="qa-label">Analytics</div>
+            <div class="qa-desc">Deep dive into your performance</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom row: Stores + Social -->
+      <div class="two-col fade-up fade-up-4">
+        <div class="stores-card">
+          <div class="stores-card-hdr">
+            <h3>My Stores</h3>
+            <span style="font-size:12px;color:var(--accent);cursor:pointer" onclick="showPage('stores')">Manage all →</span>
+          </div>
+          <div class="store-row">
+            <div class="store-thumb" style="background:rgba(200,241,53,0.08)">📱</div>
+            <div class="store-info">
+              <div class="store-name">VOID Cases™</div>
+              <div class="store-domain">voidcases.droplaunch.app</div>
+              <div class="store-stats"><span>💰 $4,310</span><span>📦 134 orders</span></div>
+            </div>
+            <div class="store-badge sb-live">Live</div>
+          </div>
+          <div class="store-row">
+            <div class="store-thumb" style="background:rgba(255,190,11,0.08)">🕯</div>
+            <div class="store-info">
+              <div class="store-name">Lumos Candles</div>
+              <div class="store-domain">lumos.droplaunch.app</div>
+              <div class="store-stats"><span>💰 $511</span><span>📦 13 orders</span></div>
+            </div>
+            <div class="store-badge sb-draft">Draft</div>
+          </div>
+        </div>
+
+        <div class="social-mini">
+          <div class="sm-hdr">
+            <h3>Social Performance</h3>
+            <span style="font-size:12px;color:var(--accent);cursor:pointer" onclick="window.location='social-hub.html'">Open hub →</span>
+          </div>
+          <div class="sm-platform">
+            <div class="sm-icon">🎵</div>
+            <div class="sm-info">
+              <div class="sm-name">TikTok</div>
+              <div class="sm-val">32.4K views · 8 posts</div>
+            </div>
+            <div class="sm-bar-wrap"><div class="sm-bar"><div class="sm-bar-fill" style="width:74%;background:#FF2D55"></div></div></div>
+          </div>
+          <div class="sm-platform">
+            <div class="sm-icon">▶️</div>
+            <div class="sm-info">
+              <div class="sm-name">YouTube</div>
+              <div class="sm-val">11.2K views · 4 posts</div>
+            </div>
+            <div class="sm-bar-wrap"><div class="sm-bar"><div class="sm-bar-fill" style="width:42%;background:#FF4444"></div></div></div>
+          </div>
+          <div class="sm-platform" onclick="showToast('📸 Connect Instagram in Social Hub','success')">
+            <div class="sm-icon">📸</div>
+            <div class="sm-info">
+              <div class="sm-name">Instagram</div>
+              <div class="sm-val" style="color:var(--muted)">Not connected</div>
+            </div>
+            <span style="font-size:11px;color:var(--accent);background:var(--accent-dim);padding:3px 8px;border-radius:100px;border:1px solid var(--accent-border)">Connect</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end overview -->
+
+    <!-- ════════ STORES PAGE ════════ -->
+    <div class="page" id="page-stores">
+      <div class="section-hdr">
+        <div><h2>My Stores</h2><p>Manage all your dropshipping stores</p></div>
+        <button style="background:var(--accent);color:var(--accent-t);border:none;padding:10px 20px;border-radius:var(--r-sm);font-family:var(--font-b);font-size:13px;font-weight:500;cursor:pointer" onclick="showToast('⚡ Opening AI builder…','success')">⚡ Build New Store</button>
+      </div>
+      <div class="stores-card">
+        <div class="stores-card-hdr"><h3>All Stores (2 of 5)</h3></div>
+        <div class="store-row">
+          <div class="store-thumb" style="background:rgba(200,241,53,0.08)">📱</div>
+          <div class="store-info">
+            <div class="store-name">VOID Cases™</div>
+            <div class="store-domain">voidcases.droplaunch.app</div>
+            <div class="store-stats"><span>💰 $4,310 revenue</span><span>📦 134 orders</span><span>👁 12K visitors</span></div>
+          </div>
+          <div class="store-badge sb-live">Live</div>
+          <div class="store-actions">
+            <button class="icon-btn" onclick="window.location='builder.html'">✏️ Edit</button>
+            <button class="icon-btn" onclick="showToast('🔗 Opening store preview…','success')">🔗 View</button>
+            <button class="icon-btn" onclick="showToast('📊 Loading analytics…','success')">📊</button>
+          </div>
+        </div>
+        <div class="store-row">
+          <div class="store-thumb" style="background:rgba(255,190,11,0.08)">🕯</div>
+          <div class="store-info">
+            <div class="store-name">Lumos Candles</div>
+            <div class="store-domain">lumos.droplaunch.app</div>
+            <div class="store-stats"><span>💰 $511 revenue</span><span>📦 13 orders</span><span>👁 1.8K visitors</span></div>
+          </div>
+          <div class="store-badge sb-draft">Draft</div>
+          <div class="store-actions">
+            <button class="icon-btn" onclick="window.location='builder.html'">✏️ Edit</button>
+            <button class="icon-btn" onclick="showToast('🚀 Publishing store…','success')">🚀 Publish</button>
+            <button class="icon-btn" onclick="showToast('🗑 Are you sure? This can\'t be undone.','error')">🗑</button>
+          </div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(200,241,53,0.12)">💰</div><div class="kpi-val">$4,821</div><div class="kpi-label">Total revenue</div><div class="kpi-delta up">↑ 23% this month</div></div>
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(91,159,255,0.12)">📦</div><div class="kpi-val">147</div><div class="kpi-label">Total orders</div><div class="kpi-delta up">↑ 11% this month</div></div>
+      </div>
+    </div>
+
+    <!-- ════════ ORDERS PAGE ════════ -->
+    <div class="page" id="page-orders">
+      <div class="section-hdr">
+        <div><h2>Orders</h2><p>147 orders total · 12 need attention</p></div>
+        <button class="icon-btn" onclick="showToast('📥 Exporting orders CSV…','success')">⬇ Export CSV</button>
+      </div>
+      <div class="orders-card">
+        <div class="orders-card-hdr">
+          <h3>Recent Orders</h3>
+          <div style="display:flex;gap:6px">
+            <button class="icon-btn" onclick="showToast('🔍 Filter applied','success')">All status ▾</button>
+            <button class="icon-btn" onclick="showToast('🔍 Filter applied','success')">All stores ▾</button>
+          </div>
+        </div>
+        <div id="orders-list"></div>
+      </div>
+    </div>
+
+    <!-- ════════ ANALYTICS PAGE ════════ -->
+    <div class="page" id="page-analytics">
+      <div class="section-hdr"><div><h2>Analytics</h2><p>Performance across all stores and platforms</p></div></div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(200,241,53,0.12)">💰</div><div class="kpi-val">$4,821</div><div class="kpi-label">Revenue this month</div><div class="kpi-delta up">↑ 23%</div></div>
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,45,85,0.12)">👁</div><div class="kpi-val">43.6K</div><div class="kpi-label">Social views</div><div class="kpi-delta up">↑ 18%</div></div>
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(74,222,128,0.12)">🛍</div><div class="kpi-val">2,140</div><div class="kpi-label">Store clicks from social</div><div class="kpi-delta up">↑ 31%</div></div>
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(91,159,255,0.12)">⭐</div><div class="kpi-val">4.8%</div><div class="kpi-label">Conversion rate</div><div class="kpi-delta up">↑ 0.6%</div></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-hdr"><div class="chart-title">Revenue over time</div><div class="chart-tabs"><div class="chart-tab active">30d</div><div class="chart-tab">90d</div></div></div>
+        <div class="chart-svg-wrap">
+          <svg class="chart" viewBox="0 0 520 160" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="rev-grad2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#C8F135"/><stop offset="100%" stop-color="#C8F135" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <line x1="36" y1="10" x2="520" y2="10" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="36" y1="50" x2="520" y2="50" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="36" y1="90" x2="520" y2="90" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="36" y1="130" x2="520" y2="130" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <path fill="url(#rev-grad2)" opacity=".35" d="M40,140 C70,135 100,130 130,120 C160,110 190,115 220,100 C250,85 280,90 310,70 C340,50 370,60 400,40 C430,20 460,25 490,15 C505,12 515,10 520,10 L520,150 L40,150 Z"/>
+            <path fill="none" stroke="#C8F135" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M40,140 C70,135 100,130 130,120 C160,110 190,115 220,100 C250,85 280,90 310,70 C340,50 370,60 400,40 C430,20 460,25 490,15 C505,12 515,10 520,10"/>
+          </svg>
+        </div>
+      </div>
+      <div class="three-col">
+        <div class="social-mini">
+          <div class="sm-hdr"><h3>TikTok</h3></div>
+          <div style="font-family:var(--font-d);font-size:32px;font-weight:800;letter-spacing:-.04em;margin-bottom:4px">32.4K</div>
+          <div style="font-size:12px;color:var(--muted)">Views this week</div>
+          <div style="margin-top:12px;font-size:13px;color:var(--green)">↑ 18% vs last week</div>
+        </div>
+        <div class="social-mini">
+          <div class="sm-hdr"><h3>YouTube</h3></div>
+          <div style="font-family:var(--font-d);font-size:32px;font-weight:800;letter-spacing:-.04em;margin-bottom:4px">11.2K</div>
+          <div style="font-size:12px;color:var(--muted)">Views this week</div>
+          <div style="margin-top:12px;font-size:13px;color:var(--green)">↑ 6% vs last week</div>
+        </div>
+        <div class="social-mini">
+          <div class="sm-hdr"><h3>Store Clicks</h3></div>
+          <div style="font-family:var(--font-d);font-size:32px;font-weight:800;letter-spacing:-.04em;margin-bottom:4px">2,140</div>
+          <div style="font-size:12px;color:var(--muted)">From social this week</div>
+          <div style="margin-top:12px;font-size:13px;color:var(--green)">↑ 31% vs last week</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ SOCIAL PAGE ════════ -->
+    <div class="page" id="page-social">
+      <div class="section-hdr"><div><h2>Social Hub</h2><p>Manage all your platform content</p></div>
+        <button style="background:var(--accent);color:var(--accent-t);border:none;padding:10px 20px;border-radius:var(--r-sm);font-family:var(--font-b);font-size:13px;font-weight:500;cursor:pointer" onclick="window.location='social-hub.html'">Open Full Hub →</button>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,45,85,0.12)">🎵</div><div class="kpi-val">32.4K</div><div class="kpi-label">TikTok views</div><div class="kpi-delta up">↑ 18%</div></div>
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,68,68,0.12)">▶️</div><div class="kpi-val">11.2K</div><div class="kpi-label">YouTube views</div><div class="kpi-delta up">↑ 6%</div></div>
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(224,64,251,0.12)">📸</div><div class="kpi-val">—</div><div class="kpi-label">Instagram</div><div class="kpi-delta flat">Not connected</div></div>
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(200,241,53,0.12)">🛍</div><div class="kpi-val">2,140</div><div class="kpi-label">Store clicks</div><div class="kpi-delta up">↑ 31%</div></div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--accent-border);border-radius:var(--r-lg);padding:28px;text-align:center;background:var(--accent-dim)">
+        <div style="font-size:36px;margin-bottom:12px">📡</div>
+        <div style="font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:8px">Open the full Social Hub</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Compose posts, schedule content, and manage your calendar all in one place.</div>
+        <button style="background:var(--accent);color:var(--accent-t);border:none;padding:12px 28px;border-radius:var(--r-sm);font-family:var(--font-b);font-size:14px;font-weight:600;cursor:pointer" onclick="window.location='social-hub.html'">Go to Social Hub →</button>
+      </div>
+    </div>
+
+    <!-- ════════ SETTINGS PAGE ════════ -->
+    <div class="page" id="page-settings">
+      <div class="section-hdr"><div><h2>Settings</h2><p>Manage your account and preferences</p></div></div>
+      <div class="settings-grid">
+        <div class="settings-card">
+          <div class="sc-hdr"><h3>Profile</h3><p>Your personal account details</p></div>
+          <div class="sc-body">
+            <div class="form-row">
+              <div class="field-group"><label>First name</label><input type="text" value="Jordan"/></div>
+              <div class="field-group"><label>Last name</label><input type="text" value="Miller"/></div>
+            </div>
+            <div class="form-row single">
+              <div class="field-group"><label>Email</label><input type="email" value="jordan@voidcases.com"/></div>
+            </div>
+            <div class="form-row single">
+              <div class="field-group"><label>Store domain prefix</label><input type="text" value="voidcases"/></div>
+            </div>
+            <button class="save-btn" onclick="showToast('✅ Profile saved','success')">Save Changes</button>
+          </div>
+        </div>
+        <div class="settings-card">
+          <div class="sc-hdr"><h3>Notifications</h3><p>Choose what you want to be notified about</p></div>
+          <div class="sc-body">
+            <div class="toggle-row">
+              <div class="toggle-info"><h4>New orders</h4><p>Get notified when a new order comes in</p></div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><h4>Low stock alerts</h4><p>Warning when product stock runs low</p></div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><h4>Social post published</h4><p>Confirmation when posts go live</p></div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><h4>Weekly performance digest</h4><p>Sunday summary of your store stats</p></div>
+              <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><h4>AI suggestions</h4><p>Smart tips to improve your store performance</p></div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+        <div class="settings-card">
+          <div class="sc-hdr"><h3>Security</h3><p>Password and authentication settings</p></div>
+          <div class="sc-body">
+            <div class="form-row single"><div class="field-group"><label>Current password</label><input type="password" placeholder="••••••••"/></div></div>
+            <div class="form-row">
+              <div class="field-group"><label>New password</label><input type="password" placeholder="••••••••"/></div>
+              <div class="field-group"><label>Confirm password</label><input type="password" placeholder="••••••••"/></div>
+            </div>
+            <button class="save-btn" onclick="showToast('🔒 Password updated','success')">Update Password</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ PLAN PAGE ════════ -->
+    <div class="page" id="page-plan">
+      <div class="section-hdr"><div><h2>Plan & Billing</h2><p>You're on the <strong>Pro plan</strong> — next billing May 17, 2026</p></div></div>
+      <div class="plan-grid">
+        <div class="plan-card">
+          <div class="plan-tag">Starter</div>
+          <div class="plan-price">Free</div>
+          <div class="plan-desc">Perfect for testing your first store idea.</div>
+          <hr class="plan-divider">
+          <ul class="plan-feats">
+            <li><span class="pf-check">✓</span> 1 AI-generated store</li>
+            <li><span class="pf-check">✓</span> Connect 1 social platform</li>
+            <li><span class="pf-check">✓</span> 10 posts/month</li>
+            <li><span class="pf-x">–</span> Custom domain</li>
+            <li><span class="pf-x">–</span> Product importer</li>
+          </ul>
+          <button class="plan-btn plan-btn-ghost" onclick="showToast('⚠️ You\'re already on a higher plan','error')">Downgrade</button>
+        </div>
+        <div class="plan-card current">
+          <div class="plan-tag">Pro <span class="current-badge">Current plan</span></div>
+          <div class="plan-price">$29<span>/mo</span></div>
+          <div class="plan-desc">For dropshippers scaling up fast.</div>
+          <hr class="plan-divider">
+          <ul class="plan-feats">
+            <li><span class="pf-check">✓</span> 5 AI-generated stores</li>
+            <li><span class="pf-check">✓</span> All 3 social platforms</li>
+            <li><span class="pf-check">✓</span> Unlimited posts</li>
+            <li><span class="pf-check">✓</span> Advanced analytics</li>
+            <li><span class="pf-check">✓</span> Custom domain + SSL</li>
+          </ul>
+          <button class="plan-btn plan-btn-ghost" style="opacity:.5;cursor:default">Current Plan</button>
+        </div>
+        <div class="plan-card">
+          <div class="plan-tag">Agency</div>
+          <div class="plan-price">$79<span>/mo</span></div>
+          <div class="plan-desc">Manage multiple brands or clients.</div>
+          <hr class="plan-divider">
+          <ul class="plan-feats">
+            <li><span class="pf-check">✓</span> Unlimited stores</li>
+            <li><span class="pf-check">✓</span> All social platforms</li>
+            <li><span class="pf-check">✓</span> Team member access</li>
+            <li><span class="pf-check">✓</span> White-label option</li>
+            <li><span class="pf-check">✓</span> Priority support</li>
+          </ul>
+          <button class="plan-btn plan-btn-fill" onclick="showToast('💳 Redirecting to checkout…','success')">Upgrade to Agency →</button>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-top:4px">
+        <div style="font-family:var(--font-d);font-size:14px;font-weight:700;margin-bottom:14px">Billing history</div>
+        <div style="display:flex;flex-direction:column;gap:0">
+          ${['May 17, 2026','Apr 17, 2026','Mar 17, 2026'].map((d,i) => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+            <div style="font-size:13px;color:var(--white)">Pro Plan — ${d}</div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="font-size:13px;font-weight:500;color:var(--white)">$29.00</span>
+              <span style="background:rgba(74,222,128,0.12);color:var(--green);font-size:11px;padding:3px 9px;border-radius:100px">Paid</span>
+              <button class="icon-btn" onclick="showToast('📄 Downloading invoice…','success')">📄 Invoice</button>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end main -->
+</div>
+
+<!-- NOTIFICATION PANEL -->
+<div class="notif-panel" id="notif-panel">
+  <div class="np-hdr">
+    <h3>Notifications</h3>
+    <button class="np-close" onclick="toggleNotifPanel()">×</button>
+  </div>
+  <div class="notif-list" id="notif-list"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── PAGE ROUTING ──
+function showPage(id, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  if (navEl) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    navEl.classList.add('active');
+  } else {
+    // auto-highlight matching nav
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(`'${id}'`)) {
+        document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+        n.classList.add('active');
+      }
+    });
+  }
+  document.getElementById('main-content').scrollTop = 0;
+}
+
+// ── CHART TABS ──
+function setChartTab(el, range) {
+  el.closest('.chart-tabs').querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  showToast(`📊 Showing ${range} data`, 'success');
+}
+
+// ── ORDERS ──
+const orders = [
+  { id:'#4821', product:'Clear Case × 2', customer:'Alex Turner', store:'VOID Cases™', amount:'$49.98', status:'paid' },
+  { id:'#4820', product:'MagSafe Wallet', customer:'Sarah Kim', store:'VOID Cases™', amount:'$19.99', status:'shipped' },
+  { id:'#4819', product:'Frosted Case', customer:'Mike Chen', store:'VOID Cases™', amount:'$28.99', status:'paid' },
+  { id:'#4818', product:'Vanilla Candle Set', customer:'Emma Davis', store:'Lumos Candles', amount:'$44.00', status:'pending' },
+  { id:'#4817', product:'Clear Case × 3', customer:'Liam Johnson', store:'VOID Cases™', amount:'$74.97', status:'shipped' },
+  { id:'#4816', product:'Soy Candle Bundle', customer:'Olivia Brown', store:'Lumos Candles', amount:'$52.00', status:'paid' },
+  { id:'#4815', product:'MagSafe Wallet × 2', customer:'Noah Williams', store:'VOID Cases™', amount:'$39.98', status:'refund' },
+  { id:'#4814', product:'Frosted Case × 4', customer:'Isabella Jones', store:'VOID Cases™', amount:'$115.96', status:'shipped' },
+];
+
+function renderOrders() {
+  const statusClass = { paid:'os-paid', pending:'os-pending', shipped:'os-shipped', refund:'os-refund' };
+  const statusLabel = { paid:'Paid', pending:'Pending', shipped:'Shipped', refund:'Refund' };
+  document.getElementById('orders-list').innerHTML = orders.map(o => `
+    <div class="order-row">
+      <div class="order-id">${o.id}</div>
+      <div class="order-product">
+        <div class="order-name">${o.product}</div>
+        <div class="order-customer">${o.customer} · ${o.store}</div>
+      </div>
+      <div class="order-amount">${o.amount}</div>
+      <div class="order-status ${statusClass[o.status]}">${statusLabel[o.status]}</div>
+      <div style="display:flex;gap:6px;margin-left:8px">
+        <button class="icon-btn" onclick="showToast('📄 Opening order ${o.id}…','success')">View</button>
+        <button class="icon-btn" onclick="showToast('🚚 Fulfilling ${o.id}…','success')">Fulfill</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── NOTIFICATIONS ──
+const notifications = [
+  { icon:'💰', bg:'rgba(200,241,53,0.15)', msg:'New order #4821 — $49.98 from VOID Cases™', time:'2 min ago', unread:true },
+  { icon:'📈', bg:'rgba(255,45,85,0.15)', msg:'Your TikTok post hit 10K views!', time:'1 hr ago', unread:true },
+  { icon:'⚠️', bg:'rgba(255,190,11,0.15)', msg:'Low stock: Frosted Case has only 3 units left', time:'3 hr ago', unread:true },
+  { icon:'📦', bg:'rgba(91,159,255,0.15)', msg:'Order #4818 marked as shipped', time:'5 hr ago', unread:false },
+  { icon:'✨', bg:'rgba(200,241,53,0.1)', msg:'AI tip: Post between 7–9 PM for 40% more TikTok reach', time:'Yesterday', unread:false },
+  { icon:'💳', bg:'rgba(74,222,128,0.12)', msg:'Payment successful — Pro Plan renewed', time:'May 17', unread:false },
+];
+
+function renderNotifications() {
+  document.getElementById('notif-list').innerHTML = notifications.map(n => `
+    <div class="notif-item ${n.unread?'unread':''}" onclick="markRead(this)">
+      <div class="ni-avatar" style="background:${n.bg}">${n.icon}</div>
+      <div class="ni-body">
+        <div class="ni-msg">${n.msg}</div>
+        <div class="ni-ts">${n.time}</div>
+      </div>
+    </div>`).join('');
+}
+
+function markRead(el) {
+  el.classList.remove('unread');
+  const badge = document.querySelector('.notif-badge');
+  const count = parseInt(badge.textContent) - 1;
+  if (count <= 0) badge.style.display = 'none';
+  else badge.textContent = count;
+}
+
+function toggleNotifPanel() {
+  document.getElementById('notif-panel').classList.toggle('open');
+}
+
+// ── TOAST ──
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  clearTimeout(t._to);
+  t._to = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── INIT ──
+renderOrders();
+renderNotifications();
+
+// Close notif panel on outside click
+document.addEventListener('click', e => {
+  const panel = document.getElementById('notif-panel');
+  const btn = document.querySelector('.notif-btn');
+  if (panel.classList.contains('open') && !panel.contains(e.target) && !btn.contains(e.target)) {
+    panel.classList.remove('open');
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DropLaunch — Sign In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090B;
+  --mid:#0F0F12;
+  --card:#141417;
+  --white:#F4F4F0;
+  --muted:#5A5A58;
+  --muted2:#2E2E2C;
+  --border:rgba(255,255,255,0.08);
+  --border2:rgba(255,255,255,0.14);
+  --accent:#C8F135;
+  --accent-t:#09090B;
+  --accent-dim:rgba(200,241,53,0.1);
+  --accent-border:rgba(200,241,53,0.25);
+  --red:#FF5C3A;
+  --green:#4ade80;
+  --font-d:'Syne',sans-serif;
+  --font-b:'DM Sans',sans-serif;
+  --r:10px;
+  --r-sm:8px;
+  --r-lg:16px;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--white);font-family:var(--font-b);font-size:14px;display:flex}
+
+/* ── LEFT PANEL ── */
+.left-panel{
+  width:52%;flex-shrink:0;
+  background:var(--mid);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  padding:40px 48px;
+  position:relative;overflow:hidden;
+}
+
+/* animated grid bg */
+.grid-bg{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse at 30% 50%,black 20%,transparent 70%);
+  animation:gridDrift 20s ease infinite alternate;
+}
+@keyframes gridDrift{
+  from{background-position:0 0}
+  to{background-position:24px 24px}
+}
+
+/* glow orbs */
+.orb{position:absolute;border-radius:50%;pointer-events:none;filter:blur(80px)}
+.orb-1{width:400px;height:400px;background:rgba(200,241,53,0.07);top:-100px;left:-80px;animation:orbFloat 8s ease infinite alternate}
+.orb-2{width:300px;height:300px;background:rgba(91,159,255,0.05);bottom:-60px;right:-60px;animation:orbFloat 10s ease infinite alternate-reverse}
+@keyframes orbFloat{from{transform:translate(0,0)}to{transform:translate(20px,30px)}}
+
+.left-top{position:relative;z-index:1}
+.logo{font-family:var(--font-d);font-size:20px;font-weight:800;letter-spacing:-.04em;display:flex;align-items:center;gap:8px;margin-bottom:56px;text-decoration:none;color:var(--white)}
+.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;box-shadow:0 0 8px rgba(200,241,53,0.6)}
+
+.left-content{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;justify-content:center}
+.left-headline{font-family:var(--font-d);font-size:clamp(32px,3.5vw,48px);font-weight:800;letter-spacing:-.05em;line-height:1.0;color:var(--white);margin-bottom:20px}
+.left-headline .hl{color:var(--accent)}
+.left-sub{font-size:15px;color:var(--muted);font-weight:300;line-height:1.7;max-width:380px;margin-bottom:40px}
+
+/* feature list */
+.feat-list{display:flex;flex-direction:column;gap:14px;margin-bottom:48px}
+.feat-item{display:flex;align-items:center;gap:14px}
+.feat-icon{width:38px;height:38px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;border:1px solid var(--border2)}
+.feat-text h4{font-size:13px;font-weight:500;color:var(--white);margin-bottom:2px}
+.feat-text p{font-size:12px;color:var(--muted);font-weight:300}
+
+/* social proof */
+.proof-row{display:flex;align-items:center;gap:14px}
+.proof-avatars{display:flex}
+.proof-avatar{width:30px;height:30px;border-radius:50%;border:2px solid var(--mid);margin-left:-8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:var(--font-d)}
+.proof-avatar:first-child{margin-left:0}
+.proof-text{font-size:13px;color:var(--muted);font-weight:300}
+.proof-text strong{color:var(--white);font-weight:500}
+
+/* left bottom */
+.left-bottom{position:relative;z-index:1;margin-top:auto}
+.ticker{display:flex;gap:8px;overflow:hidden;mask-image:linear-gradient(90deg,transparent,black 10%,black 90%,transparent)}
+.ticker-track{display:flex;gap:8px;animation:ticker 20s linear infinite;white-space:nowrap}
+.ticker-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:100px;padding:5px 12px;font-size:11px;color:var(--muted);white-space:nowrap}
+.ticker-chip .tc-dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── RIGHT PANEL ── */
+.right-panel{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:40px 48px;position:relative;overflow-y:auto;
+}
+.right-panel::-webkit-scrollbar{width:4px}
+.right-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+
+/* ── FORM CARD ── */
+.form-wrap{width:100%;max-width:420px}
+
+/* view system */
+.view{display:none;animation:viewIn .3s ease both}
+.view.active{display:block}
+@keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* form header */
+.form-hdr{margin-bottom:32px}
+.form-hdr h2{font-family:var(--font-d);font-size:26px;font-weight:800;letter-spacing:-.04em;margin-bottom:8px}
+.form-hdr p{font-size:14px;color:var(--muted);font-weight:300;line-height:1.6}
+
+/* oauth buttons */
+.oauth-btns{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.oauth-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  background:rgba(255,255,255,0.05);border:1px solid var(--border2);
+  border-radius:var(--r-sm);padding:12px 20px;
+  font-family:var(--font-b);font-size:14px;color:var(--white);
+  cursor:pointer;transition:all .2s;font-weight:400;
+}
+.oauth-btn:hover{background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.2)}
+.oauth-icon{font-size:18px}
+
+.divider{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+.divider-line{flex:1;height:1px;background:var(--border)}
+.divider span{font-size:12px;color:var(--muted);white-space:nowrap}
+
+/* fields */
+.field-group{margin-bottom:16px}
+.field-group label{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;font-weight:400}
+.field-wrap{position:relative}
+.field-wrap input{
+  width:100%;background:rgba(255,255,255,0.05);
+  border:1px solid var(--border2);border-radius:var(--r-sm);
+  padding:12px 40px 12px 14px;
+  color:var(--white);font-family:var(--font-b);font-size:14px;
+  outline:none;transition:border-color .2s,background .2s;
+}
+.field-wrap input::placeholder{color:var(--muted)}
+.field-wrap input:focus{border-color:rgba(200,241,53,.45);background:rgba(200,241,53,.03)}
+.field-wrap input.error{border-color:rgba(255,92,58,.5);background:rgba(255,92,58,.04)}
+.field-wrap input.valid{border-color:rgba(74,222,128,.4)}
+.field-icon{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--muted);cursor:pointer;user-select:none;transition:color .15s}
+.field-icon:hover{color:var(--white)}
+.field-error{font-size:12px;color:var(--red);margin-top:5px;display:none}
+.field-error.show{display:block}
+
+/* password strength */
+.pw-strength{margin-top:8px;display:none}
+.pw-strength.show{display:block}
+.pw-bars{display:flex;gap:4px;margin-bottom:5px}
+.pw-bar{flex:1;height:3px;border-radius:2px;background:var(--muted2);transition:background .3s}
+.pw-bar.weak{background:var(--red)}
+.pw-bar.fair{background:var(--accent)}
+.pw-bar.strong{background:var(--green)}
+.pw-label{font-size:11px;color:var(--muted)}
+
+/* name row */
+.name-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* submit btn */
+.submit-btn{
+  width:100%;background:var(--accent);color:var(--accent-t);
+  border:none;padding:14px;border-radius:var(--r-sm);
+  font-family:var(--font-b);font-size:14px;font-weight:600;
+  cursor:pointer;transition:all .2s;margin-top:4px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  position:relative;overflow:hidden;
+}
+.submit-btn:hover:not(:disabled){opacity:.88;transform:translateY(-1px);box-shadow:0 6px 24px rgba(200,241,53,.2)}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.submit-btn .btn-spinner{width:16px;height:16px;border:2px solid rgba(0,0,0,.3);border-top-color:var(--accent-t);border-radius:50%;animation:spin .7s linear infinite;display:none}
+.submit-btn.loading .btn-spinner{display:block}
+.submit-btn.loading .btn-text{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* form footer links */
+.form-footer{text-align:center;margin-top:20px;font-size:13px;color:var(--muted)}
+.form-footer a{color:var(--accent);text-decoration:none;font-weight:500;cursor:pointer;transition:opacity .15s}
+.form-footer a:hover{opacity:.75}
+
+/* terms */
+.terms-text{font-size:12px;color:var(--muted);text-align:center;margin-top:16px;line-height:1.6;font-weight:300}
+.terms-text a{color:var(--muted);text-decoration:underline;cursor:pointer}
+
+/* success state */
+.success-view{text-align:center;padding:20px 0}
+.success-icon{width:64px;height:64px;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px}
+.success-view h2{font-family:var(--font-d);font-size:22px;font-weight:700;letter-spacing:-.03em;margin-bottom:10px}
+.success-view p{font-size:14px;color:var(--muted);font-weight:300;line-height:1.6;margin-bottom:28px}
+
+/* plan selector in signup */
+.plan-selector{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.plan-option{
+  display:flex;align-items:center;gap:14px;padding:12px 14px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border2);
+  border-radius:var(--r-sm);cursor:pointer;transition:all .2s;
+}
+.plan-option:hover{border-color:rgba(255,255,255,.2)}
+.plan-option.selected{background:var(--accent-dim);border-color:var(--accent-border)}
+.plan-option input[type=radio]{display:none}
+.plan-radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--muted2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.plan-option.selected .plan-radio{border-color:var(--accent);background:var(--accent)}
+.plan-option.selected .plan-radio::after{content:'';width:6px;height:6px;background:var(--accent-t);border-radius:50%}
+.plan-info{flex:1}
+.plan-name{font-size:13px;font-weight:500;color:var(--white)}
+.plan-price-sm{font-size:12px;color:var(--muted)}
+.plan-badge-sm{font-size:10px;font-weight:600;background:var(--accent);color:var(--accent-t);padding:2px 8px;border-radius:100px}
+
+/* step indicator */
+.steps{display:flex;align-items:center;gap:0;margin-bottom:28px}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:var(--font-d);flex-shrink:0;transition:all .3s}
+.step-dot.done{background:var(--accent);color:var(--accent-t)}
+.step-dot.active{background:rgba(200,241,53,.15);border:2px solid var(--accent-border);color:var(--accent)}
+.step-dot.inactive{background:var(--muted2);color:var(--muted);border:2px solid var(--muted2)}
+.step-line{flex:1;height:1px;background:var(--border);transition:background .3s}
+.step-line.done{background:var(--accent-border)}
+.step-labels{display:flex;justify-content:space-between;margin-top:6px;margin-bottom:24px}
+.step-label{font-size:10px;color:var(--muted);text-align:center;flex:1;font-weight:400}
+.step-label.active{color:var(--accent)}
+.step-label.done{color:var(--green)}
+
+/* back btn */
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;margin-bottom:20px;transition:color .15s;background:none;border:none;font-family:var(--font-b);padding:0}
+.back-btn:hover{color:var(--white)}
+
+/* mobile */
+@media(max-width:768px){
+  .left-panel{display:none}
+  .right-panel{padding:32px 24px}
+}
+</style>
+</head>
+<body>
+
+<!-- LEFT PANEL -->
+<div class="left-panel">
+  <div class="grid-bg"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="left-top">
+    <a href="index.html" class="logo"><span class="logo-dot"></span>DropLaunch</a>
+  </div>
+
+  <div class="left-content" id="left-content-login">
+    <div class="left-headline">Your store.<br>Your content.<br><span class="hl">One dashboard.</span></div>
+    <div class="left-sub">Build AI-powered dropshipping stores and post to TikTok, YouTube, and Instagram all from one place.</div>
+
+    <div class="feat-list">
+      <div class="feat-item">
+        <div class="feat-icon" style="background:rgba(200,241,53,0.1)">⚡</div>
+        <div class="feat-text">
+          <h4>AI store builder</h4>
+          <p>Describe your niche — full store in 45 seconds</p>
+        </div>
+      </div>
+      <div class="feat-item">
+        <div class="feat-icon" style="background:rgba(255,45,85,0.1)">📡</div>
+        <div class="feat-text">
+          <h4>Cross-platform posting</h4>
+          <p>TikTok, YouTube & Reels from one composer</p>
+        </div>
+      </div>
+      <div class="feat-item">
+        <div class="feat-icon" style="background:rgba(91,159,255,0.1)">📊</div>
+        <div class="feat-text">
+          <h4>Unified analytics</h4>
+          <p>Social views, store clicks, and revenue — side by side</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="proof-row">
+      <div class="proof-avatars">
+        <div class="proof-avatar" style="background:rgba(200,241,53,0.2);color:var(--accent)">JM</div>
+        <div class="proof-avatar" style="background:rgba(91,159,255,0.2);color:#5B9FFF">SK</div>
+        <div class="proof-avatar" style="background:rgba(255,92,58,0.2);color:#FF5C3A">DK</div>
+        <div class="proof-avatar" style="background:rgba(224,64,251,0.2);color:#E040FB">AL</div>
+        <div class="proof-avatar" style="background:rgba(255,190,11,0.2);color:#FFBE0B">+</div>
+      </div>
+      <div class="proof-text"><strong>12,000+</strong> dropshippers already building with DropLaunch</div>
+    </div>
+  </div>
+
+  <div class="left-bottom">
+    <div class="ticker">
+      <div class="ticker-track">
+        <span class="ticker-chip"><span class="tc-dot"></span>New order · VOID Cases™ · $49.98</span>
+        <span class="ticker-chip"><span class="tc-dot"></span>TikTok post · 12K views in 2 hrs</span>
+        <span class="ticker-chip"><span class="tc-dot"></span>Store built in 38 seconds</span>
+        <span class="ticker-chip"><span class="tc-dot"></span>New order · Lumos Candles · $44.00</span>
+        <span class="ticker-chip"><span class="tc-dot"></span>YouTube Short · 6.8K views</span>
+        <span class="ticker-chip"><span class="tc-dot"></span>3 orders from one TikTok video</span>
+        <span class="ticker-chip"><span class="tc-dot"></span>New order · VOID Cases™ · $49.98</span>
+        <span class="ticker-chip"><span class="tc-dot"></span>TikTok post · 12K views in 2 hrs</span>
+        <span class="ticker-chip"><span class="tc-dot"></span>Store built in 38 seconds</span>
+        <span class="ticker-chip"><span class="tc-dot"></span>New order · Lumos Candles · $44.00</span>
+        <span class="ticker-chip"><span class="tc-dot"></span>YouTube Short · 6.8K views</span>
+        <span class="ticker-chip"><span class="tc-dot"></span>3 orders from one TikTok video</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right-panel">
+  <div class="form-wrap">
+
+    <!-- ══ LOGIN VIEW ══ -->
+    <div class="view active" id="view-login">
+      <div class="form-hdr">
+        <h2>Welcome back</h2>
+        <p>Sign in to your DropLaunch account to keep building.</p>
+      </div>
+
+      <div class="oauth-btns">
+        <button class="oauth-btn" onclick="handleOAuth('Google')">
+          <span class="oauth-icon">🌐</span> Continue with Google
+        </button>
+        <button class="oauth-btn" onclick="handleOAuth('TikTok')">
+          <span class="oauth-icon">🎵</span> Continue with TikTok
+        </button>
+      </div>
+
+      <div class="divider"><div class="divider-line"></div><span>or sign in with email</span><div class="divider-line"></div></div>
+
+      <div class="field-group">
+        <label>Email address</label>
+        <div class="field-wrap">
+          <input type="email" id="login-email" placeholder="you@example.com" oninput="clearError('login-email-err')" onblur="validateEmail('login-email','login-email-err')">
+          <span class="field-icon">✉️</span>
+        </div>
+        <div class="field-error" id="login-email-err">Please enter a valid email address</div>
+      </div>
+
+      <div class="field-group">
+        <label>Password</label>
+        <div class="field-wrap">
+          <input type="password" id="login-pw" placeholder="Enter your password" oninput="clearError('login-pw-err')">
+          <span class="field-icon" onclick="togglePw('login-pw',this)" title="Show/hide password">👁</span>
+        </div>
+        <div class="field-error" id="login-pw-err">Password must be at least 8 characters</div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:-8px;margin-bottom:20px">
+        <a style="font-size:13px;color:var(--muted);cursor:pointer;transition:color .15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'" onclick="switchView('forgot')">Forgot password?</a>
+      </div>
+
+      <button class="submit-btn" id="login-btn" onclick="handleLogin()">
+        <span class="btn-spinner"></span>
+        <span class="btn-text">Sign In →</span>
+      </button>
+
+      <div class="form-footer">
+        Don't have an account? <a onclick="switchView('signup-step1')">Create one free →</a>
+      </div>
+    </div>
+
+    <!-- ══ SIGNUP STEP 1 ══ -->
+    <div class="view" id="view-signup-step1">
+      <button class="back-btn" onclick="switchView('login')">← Back to sign in</button>
+
+      <div class="steps">
+        <div class="step-dot active" id="sdot-1">1</div>
+        <div class="step-line" id="sline-1"></div>
+        <div class="step-dot inactive" id="sdot-2">2</div>
+        <div class="step-line" id="sline-2"></div>
+        <div class="step-dot inactive" id="sdot-3">3</div>
+      </div>
+      <div class="step-labels">
+        <span class="step-label active">Account</span>
+        <span class="step-label" id="slabel-2">Your store</span>
+        <span class="step-label" id="slabel-3">Pick a plan</span>
+      </div>
+
+      <div class="form-hdr">
+        <h2>Create your account</h2>
+        <p>Start building your dropshipping empire — free forever to start.</p>
+      </div>
+
+      <div class="oauth-btns">
+        <button class="oauth-btn" onclick="handleOAuth('Google')">
+          <span class="oauth-icon">🌐</span> Sign up with Google
+        </button>
+        <button class="oauth-btn" onclick="handleOAuth('TikTok')">
+          <span class="oauth-icon">🎵</span> Sign up with TikTok
+        </button>
+      </div>
+
+      <div class="divider"><div class="divider-line"></div><span>or use email</span><div class="divider-line"></div></div>
+
+      <div class="name-row">
+        <div class="field-group" style="margin-bottom:0">
+          <label>First name</label>
+          <div class="field-wrap">
+            <input type="text" id="su-fname" placeholder="Jordan" oninput="clearError('su-fname-err')">
+          </div>
+          <div class="field-error" id="su-fname-err">Required</div>
+        </div>
+        <div class="field-group" style="margin-bottom:0">
+          <label>Last name</label>
+          <div class="field-wrap">
+            <input type="text" id="su-lname" placeholder="Miller" oninput="clearError('su-lname-err')">
+          </div>
+          <div class="field-error" id="su-lname-err">Required</div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px"></div>
+
+      <div class="field-group">
+        <label>Email address</label>
+        <div class="field-wrap">
+          <input type="email" id="su-email" placeholder="you@example.com" oninput="clearError('su-email-err')" onblur="validateEmail('su-email','su-email-err')">
+          <span class="field-icon">✉️</span>
+        </div>
+        <div class="field-error" id="su-email-err">Please enter a valid email address</div>
+      </div>
+
+      <div class="field-group">
+        <label>Password</label>
+        <div class="field-wrap">
+          <input type="password" id="su-pw" placeholder="Create a strong password" oninput="checkPasswordStrength(this.value);clearError('su-pw-err')">
+          <span class="field-icon" onclick="togglePw('su-pw',this)">👁</span>
+        </div>
+        <div class="field-error" id="su-pw-err">Password must be at least 8 characters</div>
+        <div class="pw-strength" id="pw-strength">
+          <div class="pw-bars">
+            <div class="pw-bar" id="pw-bar-1"></div>
+            <div class="pw-bar" id="pw-bar-2"></div>
+            <div class="pw-bar" id="pw-bar-3"></div>
+            <div class="pw-bar" id="pw-bar-4"></div>
+          </div>
+          <div class="pw-label" id="pw-label">Enter a password</div>
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="goToStep2()">
+        <span class="btn-text">Continue →</span>
+      </button>
+
+      <div class="terms-text">
+        By continuing, you agree to our <a>Terms of Service</a> and <a>Privacy Policy</a>
+      </div>
+
+      <div class="form-footer">
+        Already have an account? <a onclick="switchView('login')">Sign in →</a>
+      </div>
+    </div>
+
+    <!-- ══ SIGNUP STEP 2 ══ -->
+    <div class="view" id="view-signup-step2">
+      <button class="back-btn" onclick="switchView('signup-step1')">← Back</button>
+
+      <div class="steps">
+        <div class="step-dot done">✓</div>
+        <div class="step-line done"></div>
+        <div class="step-dot active">2</div>
+        <div class="step-line"></div>
+        <div class="step-dot inactive">3</div>
+      </div>
+      <div class="step-labels">
+        <span class="step-label done">Account</span>
+        <span class="step-label active">Your store</span>
+        <span class="step-label">Pick a plan</span>
+      </div>
+
+      <div class="form-hdr">
+        <h2>Tell us about your store</h2>
+        <p>This helps us personalize your AI builder experience from day one.</p>
+      </div>
+
+      <div class="field-group">
+        <label>What are you selling?</label>
+        <div class="field-wrap">
+          <input type="text" id="su-niche" placeholder="e.g. Phone cases, gym supplements, candles…">
+          <span class="field-icon">🛍</span>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label>Who is your target customer?</label>
+        <div class="field-wrap">
+          <input type="text" id="su-audience" placeholder="e.g. Gen Z, dog owners, fitness enthusiasts…">
+          <span class="field-icon">🎯</span>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label>Experience level</label>
+        <div class="field-wrap">
+          <select id="su-exp" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:var(--r-sm);padding:12px 14px;color:var(--white);font-family:var(--font-b);font-size:14px;outline:none;appearance:none;cursor:pointer">
+            <option value="" style="background:var(--card)">Select your experience level</option>
+            <option value="beginner" style="background:var(--card)">Complete beginner — never sold online</option>
+            <option value="some" style="background:var(--card)">Some experience — tried Shopify / Etsy</option>
+            <option value="experienced" style="background:var(--card)">Experienced — running stores already</option>
+            <option value="agency" style="background:var(--card)">Agency — managing stores for clients</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label>Which platforms will you post on?</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">
+          <div class="platform-check active" onclick="toggleCheck(this)" data-val="tiktok">🎵 TikTok</div>
+          <div class="platform-check" onclick="toggleCheck(this)" data-val="youtube">▶️ YouTube</div>
+          <div class="platform-check" onclick="toggleCheck(this)" data-val="instagram">📸 Instagram</div>
+        </div>
+      </div>
+
+      <style>
+        .platform-check{padding:8px 16px;border-radius:100px;border:1px solid var(--border2);font-size:13px;color:var(--muted);cursor:pointer;transition:all .2s}
+        .platform-check:hover{border-color:rgba(255,255,255,.2);color:var(--white)}
+        .platform-check.active{background:var(--accent-dim);border-color:var(--accent-border);color:var(--accent)}
+      </style>
+
+      <button class="submit-btn" onclick="goToStep3()" style="margin-top:8px">
+        <span class="btn-text">Continue →</span>
+      </button>
+    </div>
+
+    <!-- ══ SIGNUP STEP 3 ══ -->
+    <div class="view" id="view-signup-step3">
+      <button class="back-btn" onclick="switchView('signup-step2')">← Back</button>
+
+      <div class="steps">
+        <div class="step-dot done">✓</div>
+        <div class="step-line done"></div>
+        <div class="step-dot done">✓</div>
+        <div class="step-line done"></div>
+        <div class="step-dot active">3</div>
+      </div>
+      <div class="step-labels">
+        <span class="step-label done">Account</span>
+        <span class="step-label done">Your store</span>
+        <span class="step-label active">Pick a plan</span>
+      </div>
+
+      <div class="form-hdr">
+        <h2>Choose your plan</h2>
+        <p>Start free and upgrade anytime. No credit card needed for the free plan.</p>
+      </div>
+
+      <div class="plan-selector">
+        <label class="plan-option selected" onclick="selectPlan(this,'free')">
+          <input type="radio" name="plan" value="free" checked>
+          <div class="plan-radio"></div>
+          <div class="plan-info">
+            <div class="plan-name">Starter — Free forever</div>
+            <div class="plan-price-sm">1 store · 1 platform · 10 posts/month</div>
+          </div>
+        </label>
+        <label class="plan-option" onclick="selectPlan(this,'pro')">
+          <input type="radio" name="plan" value="pro">
+          <div class="plan-radio"></div>
+          <div class="plan-info">
+            <div class="plan-name">Pro — $29/month <span class="plan-badge-sm">Most popular</span></div>
+            <div class="plan-price-sm">5 stores · All platforms · Unlimited posts</div>
+          </div>
+        </label>
+        <label class="plan-option" onclick="selectPlan(this,'agency')">
+          <input type="radio" name="plan" value="agency">
+          <div class="plan-radio"></div>
+          <div class="plan-info">
+            <div class="plan-name">Agency — $79/month</div>
+            <div class="plan-price-sm">Unlimited stores · Team access · White-label</div>
+          </div>
+        </label>
+      </div>
+
+      <button class="submit-btn" id="signup-btn" onclick="handleSignup()">
+        <span class="btn-spinner"></span>
+        <span class="btn-text">Create my account →</span>
+      </button>
+
+      <div class="terms-text" style="margin-top:14px">
+        By creating an account, you agree to our <a>Terms of Service</a> and <a>Privacy Policy</a>. You can cancel anytime.
+      </div>
+    </div>
+
+    <!-- ══ FORGOT PASSWORD ══ -->
+    <div class="view" id="view-forgot">
+      <button class="back-btn" onclick="switchView('login')">← Back to sign in</button>
+
+      <div class="form-hdr">
+        <h2>Reset your password</h2>
+        <p>Enter your email and we'll send you a link to reset your password.</p>
+      </div>
+
+      <div class="field-group">
+        <label>Email address</label>
+        <div class="field-wrap">
+          <input type="email" id="forgot-email" placeholder="you@example.com" onblur="validateEmail('forgot-email','forgot-email-err')">
+          <span class="field-icon">✉️</span>
+        </div>
+        <div class="field-error" id="forgot-email-err">Please enter a valid email address</div>
+      </div>
+
+      <button class="submit-btn" id="forgot-btn" onclick="handleForgot()">
+        <span class="btn-spinner"></span>
+        <span class="btn-text">Send reset link →</span>
+      </button>
+
+      <div class="form-footer">
+        Remembered it? <a onclick="switchView('login')">Sign in →</a>
+      </div>
+    </div>
+
+    <!-- ══ FORGOT SUCCESS ══ -->
+    <div class="view" id="view-forgot-success">
+      <div class="success-view">
+        <div class="success-icon">📬</div>
+        <h2>Check your inbox</h2>
+        <p>We sent a password reset link to your email address. It expires in 15 minutes.</p>
+        <button class="submit-btn" onclick="switchView('login')" style="max-width:240px;margin:0 auto">
+          <span class="btn-text">Back to sign in →</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ SIGNUP SUCCESS ══ -->
+    <div class="view" id="view-success">
+      <div class="success-view">
+        <div class="success-icon">⚡</div>
+        <h2>You're all set, <span id="success-name" style="color:var(--accent)">Jordan</span>!</h2>
+        <p>Your DropLaunch account is ready. Let's build your first store — the AI will have it live in under a minute.</p>
+        <button class="submit-btn" onclick="window.location='dashboard.html'" style="max-width:280px;margin:0 auto">
+          <span class="btn-text">Go to my dashboard →</span>
+        </button>
+        <div style="margin-top:16px;font-size:13px;color:var(--muted)">Or <a style="color:var(--accent);cursor:pointer" onclick="window.location='builder.html'">build my first store now →</a></div>
+      </div>
+    </div>
+
+  </div><!-- end form-wrap -->
+</div><!-- end right-panel -->
+
+<script>
+// ── VIEW ROUTING ──
+function switchView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id)?.classList.add('active');
+  document.querySelector('.right-panel').scrollTop = 0;
+}
+
+// ── OAUTH ──
+function handleOAuth(provider) {
+  const btn = event.currentTarget;
+  const orig = btn.innerHTML;
+  btn.innerHTML = `<span style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.2);border-top-color:var(--white);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;margin-right:8px"></span> Connecting…`;
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.innerHTML = orig;
+    btn.disabled = false;
+    // Simulate success
+    document.getElementById('success-name').textContent = 'there';
+    switchView('success');
+  }, 1600);
+}
+
+// ── VALIDATION ──
+function validateEmail(inputId, errId) {
+  const input = document.getElementById(inputId);
+  const err = document.getElementById(errId);
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim());
+  if (!valid && input.value.trim()) {
+    input.classList.add('error'); input.classList.remove('valid');
+    err.classList.add('show');
+  } else if (valid) {
+    input.classList.remove('error'); input.classList.add('valid');
+    err.classList.remove('show');
+  }
+  return valid || !input.value.trim();
+}
+
+function clearError(errId) {
+  document.getElementById(errId)?.classList.remove('show');
+}
+
+// ── PASSWORD TOGGLE ──
+function togglePw(inputId, icon) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') { input.type = 'text'; icon.textContent = '🙈'; }
+  else { input.type = 'password'; icon.textContent = '👁'; }
+}
+
+// ── PASSWORD STRENGTH ──
+function checkPasswordStrength(pw) {
+  const wrap = document.getElementById('pw-strength');
+  const label = document.getElementById('pw-label');
+  const bars = [1,2,3,4].map(i => document.getElementById('pw-bar-'+i));
+
+  if (!pw) { wrap.classList.remove('show'); return; }
+  wrap.classList.add('show');
+
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw) || /[^A-Za-z0-9]/.test(pw)) score++;
+
+  const cls = score <= 1 ? 'weak' : score <= 2 ? 'fair' : 'strong';
+  const labels = { weak:'Weak — try adding uppercase and numbers', fair:'Fair — getting better', strong:'Strong password ✓' };
+
+  bars.forEach((b, i) => {
+    b.className = 'pw-bar';
+    if (i < score) b.classList.add(cls);
+  });
+  label.textContent = labels[cls];
+  label.style.color = cls === 'strong' ? 'var(--green)' : cls === 'fair' ? 'var(--accent)' : 'var(--red)';
+}
+
+// ── PLAN SELECTION ──
+function selectPlan(el, plan) {
+  document.querySelectorAll('.plan-option').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ── PLATFORM TOGGLES ──
+function toggleCheck(el) { el.classList.toggle('active'); }
+
+// ── STEP NAVIGATION ──
+function goToStep2() {
+  // Validate step 1
+  const fname = document.getElementById('su-fname').value.trim();
+  const lname = document.getElementById('su-lname').value.trim();
+  const email = document.getElementById('su-email').value.trim();
+  const pw = document.getElementById('su-pw').value;
+  let ok = true;
+
+  if (!fname) { document.getElementById('su-fname-err').classList.add('show'); ok = false; }
+  if (!lname) { document.getElementById('su-lname-err').classList.add('show'); ok = false; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    document.getElementById('su-email-err').classList.add('show');
+    document.getElementById('su-email').classList.add('error'); ok = false;
+  }
+  if (pw.length < 8) { document.getElementById('su-pw-err').classList.add('show'); ok = false; }
+
+  if (!ok) return;
+  switchView('signup-step2');
+}
+
+function goToStep3() {
+  switchView('signup-step3');
+}
+
+// ── LOGIN ──
+async function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw = document.getElementById('login-pw').value;
+  let ok = true;
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    document.getElementById('login-email-err').classList.add('show');
+    document.getElementById('login-email').classList.add('error'); ok = false;
+  }
+  if (!pw || pw.length < 8) {
+    document.getElementById('login-pw-err').classList.add('show');
+    document.getElementById('login-pw').classList.add('error'); ok = false;
+  }
+  if (!ok) return;
+
+  const btn = document.getElementById('login-btn');
+  btn.classList.add('loading'); btn.disabled = true;
+
+  await new Promise(r => setTimeout(r, 1600));
+  btn.classList.remove('loading'); btn.disabled = false;
+  window.location = 'dashboard.html';
+}
+
+// ── SIGNUP SUBMIT ──
+async function handleSignup() {
+  const btn = document.getElementById('signup-btn');
+  btn.classList.add('loading'); btn.disabled = true;
+
+  await new Promise(r => setTimeout(r, 2000));
+  btn.classList.remove('loading'); btn.disabled = false;
+
+  const fname = document.getElementById('su-fname').value.trim() || 'there';
+  document.getElementById('success-name').textContent = fname;
+  switchView('success');
+}
+
+// ── FORGOT PASSWORD ──
+async function handleForgot() {
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    document.getElementById('forgot-email-err').classList.add('show');
+    document.getElementById('forgot-email').classList.add('error');
+    return;
+  }
+
+  const btn = document.getElementById('forgot-btn');
+  btn.classList.add('loading'); btn.disabled = true;
+  await new Promise(r => setTimeout(r, 1400));
+  btn.classList.remove('loading'); btn.disabled = false;
+  switchView('forgot-success');
+}
+
+// ── ENTER KEY SUPPORT ──
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const active = document.querySelector('.view.active');
+  if (!active) return;
+  const id = active.id;
+  if (id === 'view-login') handleLogin();
+  else if (id === 'view-forgot') handleForgot();
+  else if (id === 'view-signup-step1') goToStep2();
+  else if (id === 'view-signup-step2') goToStep3();
+  else if (id === 'view-signup-step3') handleSignup();
+});
+</script>
+</body>
+</html>

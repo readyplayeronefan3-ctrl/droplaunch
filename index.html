@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DropLaunch — AI Store Builder & Social Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #0A0A0B;
+    --white: #FAFAF8;
+    --accent: #C8F135;
+    --accent2: #FF5C3A;
+    --mid: #1A1A1C;
+    --muted: #888880;
+    --border: rgba(255,255,255,0.08);
+    --card: #111113;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* --- NAV --- */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 48px;
+    background: rgba(10,10,11,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+
+  .nav-logo .dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 36px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 400;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--white); }
+
+  .nav-cta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-ghost {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--white);
+    padding: 10px 22px;
+    border-radius: 6px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    text-decoration: none;
+  }
+
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04); }
+
+  .btn-accent {
+    background: var(--accent);
+    color: var(--black);
+    border: none;
+    padding: 10px 22px;
+    border-radius: 6px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-accent:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  /* --- HERO --- */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 140px 24px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .hero-bg::before {
+    content: '';
+    position: absolute;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 900px; height: 600px;
+    background: radial-gradient(ellipse at center, rgba(200,241,53,0.12) 0%, transparent 70%);
+  }
+
+  .hero-bg::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(ellipse at center, rgba(255,92,58,0.08) 0%, transparent 70%);
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+
+  .hero-content { position: relative; z-index: 1; max-width: 860px; }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(200,241,53,0.1);
+    border: 1px solid rgba(200,241,53,0.25);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 7px 16px;
+    border-radius: 100px;
+    margin-bottom: 32px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero-badge .pulse {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(44px, 7vw, 88px);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.04em;
+    color: var(--white);
+    margin-bottom: 28px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  h1 .highlight {
+    color: var(--accent);
+    position: relative;
+  }
+
+  h1 .highlight2 { color: var(--accent2); }
+
+  .hero-sub {
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--muted);
+    max-width: 540px;
+    margin: 0 auto 44px;
+    line-height: 1.7;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .hero-btns {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 64px;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .btn-hero {
+    background: var(--accent);
+    color: var(--black);
+    border: none;
+    padding: 16px 36px;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-hero:hover { opacity: 0.88; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(200,241,53,0.2); }
+
+  .btn-hero-ghost {
+    background: rgba(255,255,255,0.05);
+    color: var(--white);
+    border: 1px solid var(--border);
+    padding: 16px 36px;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-hero-ghost:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.2); }
+
+  .hero-stats {
+    display: flex;
+    align-items: center;
+    gap: 48px;
+    justify-content: center;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.03em;
+  }
+  .stat-label { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .stat-div { width: 1px; height: 36px; background: var(--border); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* --- MARQUEE --- */
+  .marquee-section {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 0;
+    overflow: hidden;
+    background: var(--mid);
+  }
+
+  .marquee-track {
+    display: flex;
+    gap: 0;
+    animation: marquee 20s linear infinite;
+    white-space: nowrap;
+  }
+
+  .marquee-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 40px;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .marquee-item .m-dot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* --- SECTIONS COMMON --- */
+  section { padding: 100px 48px; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 24px; height: 1px;
+    background: var(--accent);
+  }
+
+  .section-h2 {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--white);
+    margin-bottom: 16px;
+  }
+
+  .section-sub {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 520px;
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  /* --- AI BUILDER SECTION --- */
+  .builder-section { background: var(--black); }
+
+  .builder-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+    max-width: 1200px;
+    margin: 64px auto 0;
+  }
+
+  .builder-demo {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .demo-header {
+    background: var(--mid);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .demo-dots { display: flex; gap: 6px; }
+  .demo-dots span { width: 10px; height: 10px; border-radius: 50%; }
+  .demo-dots span:nth-child(1) { background: #FF5F57; }
+  .demo-dots span:nth-child(2) { background: #FEBC2E; }
+  .demo-dots span:nth-child(3) { background: #28C840; }
+
+  .demo-title { font-size: 12px; color: var(--muted); flex: 1; text-align: center; }
+
+  .demo-body { padding: 24px; }
+
+  .demo-prompt {
+    background: rgba(200,241,53,0.06);
+    border: 1px solid rgba(200,241,53,0.2);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 300;
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+
+  .demo-arrow {
+    text-align: center;
+    font-size: 20px;
+    margin-bottom: 16px;
+    color: var(--muted);
+    animation: bounce 2s ease infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(4px); }
+  }
+
+  .demo-output {
+    background: var(--mid);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .demo-store-nav {
+    background: #111;
+    padding: 10px 16px;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    gap: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .demo-store-hero {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    padding: 24px 16px;
+    text-align: center;
+  }
+
+  .demo-store-hero h3 {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+
+  .demo-store-hero p { font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 12px; }
+
+  .demo-store-btn {
+    background: #C8F135;
+    color: #000;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .demo-products {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .demo-product {
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .demo-product-img {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 5px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+
+  .demo-product h4 { font-size: 9px; font-weight: 500; color: var(--white); margin-bottom: 3px; }
+  .demo-product p { font-size: 9px; color: var(--accent); font-weight: 600; }
+
+  .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(200,241,53,0.08);
+    border: 1px solid rgba(200,241,53,0.15);
+    color: var(--accent);
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 100px;
+    margin-top: 10px;
+    font-weight: 500;
+  }
+
+  .builder-features { display: flex; flex-direction: column; gap: 24px; margin-top: 40px; }
+
+  .builder-feat {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+  }
+
+  .feat-icon {
+    width: 44px; height: 44px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .feat-text h4 {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+
+  .feat-text p { font-size: 14px; color: var(--muted); line-height: 1.6; font-weight: 300; }
+
+  /* --- SOCIAL SECTION --- */
+  .social-section { background: var(--mid); }
+
+  .social-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+    max-width: 1200px;
+    margin: 64px auto 0;
+  }
+
+  .platform-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .platform-card {
+    background: var(--black);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 20px;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+
+  .platform-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+
+  .platform-card.featured { border-color: rgba(200,241,53,0.3); background: rgba(200,241,53,0.04); }
+
+  .p-logo { font-size: 32px; margin-bottom: 14px; }
+
+  .platform-card h4 {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+
+  .platform-card p { font-size: 13px; color: var(--muted); line-height: 1.5; font-weight: 300; }
+
+  .p-stat { margin-top: 12px; font-size: 12px; font-weight: 500; color: var(--accent); }
+
+  .post-composer {
+    background: var(--black);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .composer-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .composer-header span {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--white);
+  }
+
+  .composer-platforms { display: flex; gap: 8px; }
+
+  .cp { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; transition: border-color 0.2s; }
+  .cp.active { border-color: var(--accent); background: rgba(200,241,53,0.1); }
+
+  .composer-body { padding: 22px; }
+
+  .upload-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    padding: 32px;
+    text-align: center;
+    margin-bottom: 16px;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 300;
+  }
+
+  .upload-zone .u-icon { font-size: 28px; margin-bottom: 8px; }
+
+  .composer-textarea {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: var(--white);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 300;
+    resize: none;
+    outline: none;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  .composer-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px 22px;
+  }
+
+  .ai-caption-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(200,241,53,0.1);
+    border: 1px solid rgba(200,241,53,0.2);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .post-btn {
+    background: var(--accent);
+    color: var(--black);
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-body);
+  }
+
+  /* --- FEATURES GRID --- */
+  .features-section { background: var(--black); }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    max-width: 1200px;
+    margin: 64px auto 0;
+  }
+
+  .fg-card {
+    background: var(--black);
+    padding: 36px 32px;
+    transition: background 0.2s;
+  }
+
+  .fg-card:hover { background: var(--card); }
+
+  .fg-num {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .fg-icon { font-size: 28px; margin-bottom: 16px; }
+
+  .fg-card h3 {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 10px;
+    letter-spacing: -0.02em;
+  }
+
+  .fg-card p { font-size: 14px; color: var(--muted); line-height: 1.6; font-weight: 300; }
+
+  /* --- PRICING --- */
+  .pricing-section { background: var(--mid); }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1000px;
+    margin: 64px auto 0;
+  }
+
+  .price-card {
+    background: var(--black);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px 28px;
+    transition: transform 0.2s;
+  }
+
+  .price-card:hover { transform: translateY(-4px); }
+
+  .price-card.featured {
+    background: var(--card);
+    border-color: var(--accent);
+    position: relative;
+  }
+
+  .pop-badge {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: var(--black);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 16px;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+
+  .plan-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .plan-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .plan-dollar {
+    font-family: var(--font-display);
+    font-size: 44px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  .plan-per { font-size: 14px; color: var(--muted); font-weight: 300; }
+
+  .plan-tagline { font-size: 13px; color: var(--muted); margin-bottom: 28px; font-weight: 300; }
+
+  .plan-divider { border: none; border-top: 1px solid var(--border); margin-bottom: 24px; }
+
+  .plan-feats { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+
+  .plan-feats li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--white);
+    font-weight: 300;
+  }
+
+  .plan-feats li .check { color: var(--accent); font-size: 16px; }
+  .plan-feats li .x { color: var(--muted); font-size: 16px; }
+
+  .plan-btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .plan-btn-outline {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--white);
+  }
+
+  .plan-btn-outline:hover { border-color: rgba(255,255,255,0.3); }
+
+  .plan-btn-filled {
+    background: var(--accent);
+    color: var(--black);
+    border: none;
+  }
+
+  .plan-btn-filled:hover { opacity: 0.88; }
+
+  /* --- TESTIMONIALS --- */
+  .testimonials { background: var(--black); }
+
+  .testimonial-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1200px;
+    margin: 64px auto 0;
+  }
+
+  .tcard {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 24px;
+  }
+
+  .tcard-stars { color: var(--accent); font-size: 14px; margin-bottom: 14px; letter-spacing: 2px; }
+
+  .tcard-text {
+    font-size: 15px;
+    color: var(--white);
+    line-height: 1.65;
+    font-weight: 300;
+    margin-bottom: 22px;
+    font-style: italic;
+  }
+
+  .tcard-author { display: flex; align-items: center; gap: 12px; }
+
+  .tcard-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-display);
+  }
+
+  .tcard-name { font-size: 13px; font-weight: 600; color: var(--white); }
+  .tcard-role { font-size: 12px; color: var(--muted); }
+
+  /* --- CTA --- */
+  .cta-section {
+    background: var(--black);
+    padding: 100px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-glow {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px; height: 300px;
+    background: radial-gradient(ellipse, rgba(200,241,53,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .cta-section h2 {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--white);
+    line-height: 1.05;
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .cta-section p {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 460px;
+    margin: 0 auto 40px;
+    font-weight: 300;
+    position: relative;
+  }
+
+  /* --- FOOTER --- */
+  footer {
+    background: var(--mid);
+    border-top: 1px solid var(--border);
+    padding: 52px 48px 32px;
+  }
+
+  .footer-top {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 48px;
+  }
+
+  .footer-brand p {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 14px;
+    max-width: 260px;
+    line-height: 1.6;
+    font-weight: 300;
+  }
+
+  .footer-col h5 {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 16px;
+    letter-spacing: 0.03em;
+  }
+
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+  .footer-col a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 300;
+    transition: color 0.2s;
+  }
+
+  .footer-col a:hover { color: var(--white); }
+
+  .footer-bottom {
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* --- MOBILE --- */
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .nav-links { display: none; }
+    section { padding: 60px 20px; }
+    .builder-layout, .social-layout { grid-template-columns: 1fr; gap: 40px; }
+    .features-grid { grid-template-columns: 1fr; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    .testimonial-grid { grid-template-columns: 1fr; }
+    .platform-cards { grid-template-columns: 1fr 1fr; }
+    .footer-top { grid-template-columns: 1fr 1fr; }
+    .hero-stats { gap: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo"><span class="dot"></span>DropLaunch</a>
+  <ul class="nav-links">
+    <li><a href="#builder">AI Builder</a></li>
+    <li><a href="#social">Social Hub</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#about">About</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a href="#" class="btn-ghost">Sign in</a>
+    <a href="#" class="btn-accent">Start free →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="hero-grid"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="pulse"></span>
+      Now in early access — limited spots
+    </div>
+    <h1>Build your store.<br><span class="highlight">Go viral.</span><br>Sell <span class="highlight2">everywhere.</span></h1>
+    <p class="hero-sub">DropLaunch uses AI to build your entire dropshipping store in seconds, then lets you post to TikTok, YouTube, and Instagram Reels — all from one dashboard.</p>
+    <div class="hero-btns">
+      <button class="btn-hero">⚡ Build my store free</button>
+      <button class="btn-hero-ghost">▶ Watch demo (2 min)</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num">12k+</div>
+        <div class="stat-label">Stores built</div>
+      </div>
+      <div class="stat-div"></div>
+      <div class="stat">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Platforms connected</div>
+      </div>
+      <div class="stat-div"></div>
+      <div class="stat">
+        <div class="stat-num">~45s</div>
+        <div class="stat-label">Avg build time</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-section">
+  <div class="marquee-track">
+    <span class="marquee-item"><span class="m-dot"></span>AI website builder</span>
+    <span class="marquee-item"><span class="m-dot"></span>TikTok integration</span>
+    <span class="marquee-item"><span class="m-dot"></span>YouTube Shorts</span>
+    <span class="marquee-item"><span class="m-dot"></span>Instagram Reels</span>
+    <span class="marquee-item"><span class="m-dot"></span>Dropship ready</span>
+    <span class="marquee-item"><span class="m-dot"></span>No code needed</span>
+    <span class="marquee-item"><span class="m-dot"></span>Product importer</span>
+    <span class="marquee-item"><span class="m-dot"></span>Analytics dashboard</span>
+    <span class="marquee-item"><span class="m-dot"></span>AI website builder</span>
+    <span class="marquee-item"><span class="m-dot"></span>TikTok integration</span>
+    <span class="marquee-item"><span class="m-dot"></span>YouTube Shorts</span>
+    <span class="marquee-item"><span class="m-dot"></span>Instagram Reels</span>
+    <span class="marquee-item"><span class="m-dot"></span>Dropship ready</span>
+    <span class="marquee-item"><span class="m-dot"></span>No code needed</span>
+    <span class="marquee-item"><span class="m-dot"></span>Product importer</span>
+    <span class="marquee-item"><span class="m-dot"></span>Analytics dashboard</span>
+  </div>
+</div>
+
+<!-- AI BUILDER SECTION -->
+<section class="builder-section" id="builder">
+  <div style="max-width: 1200px; margin: 0 auto;">
+    <div class="section-label">AI website builder</div>
+    <div class="section-h2">Describe it.<br>We build it.</div>
+    <div class="section-sub">Tell the AI your niche, vibe, and products. It generates your full store — homepage, product pages, copy, and design — in under a minute.</div>
+  </div>
+  <div class="builder-layout">
+    <div>
+      <div class="builder-features">
+        <div class="builder-feat">
+          <div class="feat-icon">🧠</div>
+          <div class="feat-text">
+            <h4>Describe in plain English</h4>
+            <p>Just type what you're selling and who you're selling to. The AI handles the rest — no templates, no drag-and-drop required.</p>
+          </div>
+        </div>
+        <div class="builder-feat">
+          <div class="feat-icon">⚡</div>
+          <div class="feat-text">
+            <h4>Full store in 45 seconds</h4>
+            <p>Homepage, product pages, about page, FAQ, and checkout — written and designed automatically with your brand voice.</p>
+          </div>
+        </div>
+        <div class="builder-feat">
+          <div class="feat-icon">✏️</div>
+          <div class="feat-text">
+            <h4>Easy customization</h4>
+            <p>Click any element to edit. Swap colors, fonts, and images. Publish to your custom domain in one click.</p>
+          </div>
+        </div>
+        <div class="builder-feat">
+          <div class="feat-icon">📦</div>
+          <div class="feat-text">
+            <h4>Dropship-native</h4>
+            <p>Import products from AliExpress, CJ Dropshipping, or Zendrop. Pricing rules, inventory sync, and order tracking built in.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="builder-demo">
+        <div class="demo-header">
+          <div class="demo-dots"><span></span><span></span><span></span></div>
+          <div class="demo-title">DropLaunch AI Builder</div>
+        </div>
+        <div class="demo-body">
+          <div class="demo-prompt">"I sell minimalist phone cases targeting Gen Z. Dark aesthetic, premium feel. Products: clear case, frosted case, magsafe wallet."</div>
+          <div class="demo-arrow">↓ AI generating your store…</div>
+          <div class="demo-output">
+            <div class="demo-store-nav">
+              <span>Home</span><span>Shop</span><span>About</span><span>Contact</span>
+            </div>
+            <div class="demo-store-hero">
+              <h3>VOID CASES™</h3>
+              <p>Premium. Minimal. Built for the ones who don't follow.</p>
+              <button class="demo-store-btn">Shop the drop →</button>
+            </div>
+            <div class="demo-products">
+              <div class="demo-product">
+                <div class="demo-product-img" style="background: rgba(255,255,255,0.05);">📱</div>
+                <h4>Clear Case</h4>
+                <p>$24.99</p>
+              </div>
+              <div class="demo-product">
+                <div class="demo-product-img" style="background: rgba(255,255,255,0.05);">🌫️</div>
+                <h4>Frosted Case</h4>
+                <p>$28.99</p>
+              </div>
+              <div class="demo-product">
+                <div class="demo-product-img" style="background: rgba(255,255,255,0.05);">💳</div>
+                <h4>MagSafe Wallet</h4>
+                <p>$19.99</p>
+              </div>
+            </div>
+          </div>
+          <div style="text-align: center;">
+            <span class="ai-badge">✨ Generated in 38 seconds</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL HUB -->
+<section class="social-section" id="social">
+  <div style="max-width: 1200px; margin: 0 auto;">
+    <div class="section-label">Social media hub</div>
+    <div class="section-h2">Post once.<br>Reach millions.</div>
+    <div class="section-sub">Connect your TikTok, YouTube, and Instagram accounts. Upload one video and publish everywhere simultaneously — with AI-generated captions for each platform.</div>
+  </div>
+  <div class="social-layout">
+    <div class="platform-cards">
+      <div class="platform-card featured">
+        <div class="p-logo">🎵</div>
+        <h4>TikTok</h4>
+        <p>Schedule videos, auto-hashtag, and link traffic directly to your store product pages.</p>
+        <div class="p-stat">↑ Avg 3.2x more store visits</div>
+      </div>
+      <div class="platform-card">
+        <div class="p-logo">▶️</div>
+        <h4>YouTube</h4>
+        <p>Publish Shorts and long-form reviews. Auto-sync your store link in every description.</p>
+        <div class="p-stat">↑ Builds long-term SEO</div>
+      </div>
+      <div class="platform-card">
+        <div class="p-logo">📸</div>
+        <h4>Instagram</h4>
+        <p>Post Reels with AI-generated captions and auto-generated hashtag sets that actually work.</p>
+        <div class="p-stat">↑ 2.8x higher engagement</div>
+      </div>
+      <div class="platform-card">
+        <div class="p-logo">🗓️</div>
+        <h4>Scheduler</h4>
+        <p>Plan your content calendar weeks ahead. AI recommends best posting times per platform.</p>
+        <div class="p-stat">↑ Consistency = growth</div>
+      </div>
+    </div>
+    <div class="post-composer">
+      <div class="composer-header">
+        <span>New post</span>
+        <div class="composer-platforms">
+          <div class="cp active">🎵</div>
+          <div class="cp active">▶️</div>
+          <div class="cp active">📸</div>
+        </div>
+      </div>
+      <div class="composer-body">
+        <div class="upload-zone">
+          <div class="u-icon">🎬</div>
+          Drop your video here or <span style="color: var(--accent);">browse</span>
+        </div>
+        <textarea class="composer-textarea" rows="4" placeholder="Write your caption… or let AI write it for all 3 platforms at once ✨"></textarea>
+      </div>
+      <div class="composer-footer">
+        <div class="ai-caption-btn">✨ Generate AI captions</div>
+        <button class="post-btn">Post to all 3 →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES GRID -->
+<section class="features-section">
+  <div style="max-width: 1200px; margin: 0 auto;">
+    <div class="section-label">Everything included</div>
+    <div class="section-h2">Built for dropshippers<br>who move fast.</div>
+  </div>
+  <div class="features-grid">
+    <div class="fg-card">
+      <div class="fg-num">01</div>
+      <div class="fg-icon">🤖</div>
+      <h3>AI copywriting</h3>
+      <p>Product descriptions, ad copy, email sequences, and social captions — all written by AI trained on high-converting dropshipping stores.</p>
+    </div>
+    <div class="fg-card">
+      <div class="fg-num">02</div>
+      <div class="fg-icon">📊</div>
+      <h3>Unified analytics</h3>
+      <p>See your store traffic and social engagement side by side. Know exactly which TikTok video drove the most sales last week.</p>
+    </div>
+    <div class="fg-card">
+      <div class="fg-num">03</div>
+      <div class="fg-icon">🔗</div>
+      <h3>Product importer</h3>
+      <p>One-click import from AliExpress, CJ Dropshipping, and Zendrop. Auto-fill descriptions, pricing rules, and images.</p>
+    </div>
+    <div class="fg-card">
+      <div class="fg-num">04</div>
+      <div class="fg-icon">📱</div>
+      <h3>Mobile-optimized stores</h3>
+      <p>Every generated store is fully responsive. Since 70% of buyers come from TikTok on mobile, this matters more than anything.</p>
+    </div>
+    <div class="fg-card">
+      <div class="fg-num">05</div>
+      <div class="fg-icon">🔒</div>
+      <h3>Custom domain & SSL</h3>
+      <p>Connect your own domain and get HTTPS automatically. Look professional from day one.</p>
+    </div>
+    <div class="fg-card">
+      <div class="fg-num">06</div>
+      <div class="fg-icon">💳</div>
+      <h3>Payments built in</h3>
+      <p>Accept Stripe, PayPal, and Apple Pay out of the box. No plugins, no setup headaches — just start selling.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section" id="pricing">
+  <div style="max-width: 1000px; margin: 0 auto; text-align: center;">
+    <div class="section-label" style="justify-content: center;">Pricing</div>
+    <div class="section-h2">Start free. Scale fast.</div>
+    <div class="section-sub" style="margin: 0 auto;">No hidden fees. No contracts. Upgrade or downgrade any time.</div>
+  </div>
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="plan-label">Starter</div>
+      <div class="plan-price-row">
+        <div class="plan-dollar">Free</div>
+      </div>
+      <div class="plan-tagline">Perfect for your first store idea.</div>
+      <hr class="plan-divider">
+      <ul class="plan-feats">
+        <li><span class="check">✓</span> 1 AI-generated store</li>
+        <li><span class="check">✓</span> Connect 1 social platform</li>
+        <li><span class="check">✓</span> 10 posts per month</li>
+        <li><span class="check">✓</span> Basic analytics</li>
+        <li><span class="x">–</span> Custom domain</li>
+        <li><span class="x">–</span> Product importer</li>
+      </ul>
+      <button class="plan-btn plan-btn-outline">Get started free</button>
+    </div>
+    <div class="price-card featured">
+      <div class="pop-badge">Most popular</div>
+      <div class="plan-label">Pro</div>
+      <div class="plan-price-row">
+        <div class="plan-dollar">$29</div>
+        <div class="plan-per">/month</div>
+      </div>
+      <div class="plan-tagline">For dropshippers scaling up.</div>
+      <hr class="plan-divider">
+      <ul class="plan-feats">
+        <li><span class="check">✓</span> 5 AI-generated stores</li>
+        <li><span class="check">✓</span> All 3 social platforms</li>
+        <li><span class="check">✓</span> Unlimited posts</li>
+        <li><span class="check">✓</span> Advanced analytics</li>
+        <li><span class="check">✓</span> Custom domain + SSL</li>
+        <li><span class="check">✓</span> Product importer</li>
+      </ul>
+      <button class="plan-btn plan-btn-filled">Start Pro free →</button>
+    </div>
+    <div class="price-card">
+      <div class="plan-label">Agency</div>
+      <div class="plan-price-row">
+        <div class="plan-dollar">$79</div>
+        <div class="plan-per">/month</div>
+      </div>
+      <div class="plan-tagline">Manage multiple brands or clients.</div>
+      <hr class="plan-divider">
+      <ul class="plan-feats">
+        <li><span class="check">✓</span> Unlimited stores</li>
+        <li><span class="check">✓</span> All social platforms</li>
+        <li><span class="check">✓</span> Team member access</li>
+        <li><span class="check">✓</span> White-label option</li>
+        <li><span class="check">✓</span> Priority support</li>
+        <li><span class="check">✓</span> Client dashboard</li>
+      </ul>
+      <button class="plan-btn plan-btn-outline">Contact sales</button>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <div style="max-width: 1200px; margin: 0 auto;">
+    <div class="section-label">What people are saying</div>
+    <div class="section-h2">Real results from<br>real dropshippers.</div>
+  </div>
+  <div class="testimonial-grid">
+    <div class="tcard">
+      <div class="tcard-stars">★★★★★</div>
+      <div class="tcard-text">"I had a full store live in under 3 minutes. Like, an actual store with real copy and product pages. I've been trying to do this on Shopify for weeks."</div>
+      <div class="tcard-author">
+        <div class="tcard-avatar" style="background: rgba(200,241,53,0.15); color: var(--accent);">JM</div>
+        <div>
+          <div class="tcard-name">Jordan M.</div>
+          <div class="tcard-role">TikTok dropshipper — 140k followers</div>
+        </div>
+      </div>
+    </div>
+    <div class="tcard">
+      <div class="tcard-stars">★★★★★</div>
+      <div class="tcard-text">"The social hub is the real game changer. I post once and it goes to all three platforms. I'm getting 3x the reach for the same amount of work."</div>
+      <div class="tcard-author">
+        <div class="tcard-avatar" style="background: rgba(255,92,58,0.15); color: var(--accent2);">SL</div>
+        <div>
+          <div class="tcard-name">Sofia L.</div>
+          <div class="tcard-role">E-commerce brand owner</div>
+        </div>
+      </div>
+    </div>
+    <div class="tcard">
+      <div class="tcard-stars">★★★★★</div>
+      <div class="tcard-text">"I manage stores for 6 clients now. DropLaunch's agency plan pays for itself 10x over. The AI copy alone saves me 8+ hours a week."</div>
+      <div class="tcard-author">
+        <div class="tcard-avatar" style="background: rgba(30,144,255,0.15); color: #5B9FFF;">DK</div>
+        <div>
+          <div class="tcard-name">Dev K.</div>
+          <div class="tcard-role">Dropshipping agency owner</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <h2>Your store is<br><span style="color: var(--accent);">45 seconds away.</span></h2>
+  <p>No credit card. No design skills. No excuses. Just describe what you're selling and let DropLaunch handle the rest.</p>
+  <button class="btn-hero" style="font-size: 16px; padding: 18px 44px;">⚡ Build my free store now</button>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="nav-logo" style="text-decoration: none; display: inline-flex;"><span class="dot"></span>DropLaunch</div>
+      <p>The all-in-one platform for dropshippers and modern brands. Build, post, and sell — all from one place.</p>
+    </div>
+    <div class="footer-col">
+      <h5>Product</h5>
+      <ul>
+        <li><a href="#">AI Builder</a></li>
+        <li><a href="#">Social Hub</a></li>
+        <li><a href="#">Analytics</a></li>
+        <li><a href="#">Product Importer</a></li>
+        <li><a href="#">Pricing</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h5>Resources</h5>
+      <ul>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Help center</a></li>
+        <li><a href="#">Dropshipping guide</a></li>
+        <li><a href="#">API docs</a></li>
+        <li><a href="#">Changelog</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h5>Company</h5>
+      <ul>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Privacy</a></li>
+        <li><a href="#">Terms</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 DropLaunch. All rights reserved.</span>
+    <span style="color: var(--accent);">Built for builders. ⚡</span>
+  </div>
+</footer>
+
+</body>
+</html>
