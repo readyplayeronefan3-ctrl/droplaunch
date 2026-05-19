@@ -18,8 +18,8 @@ export default async function handler(req, res) {
     let userMessage = ''
 
     if (type === 'build') {
-      systemPrompt = `You are an expert dropshipping store web designer. Generate a complete, beautiful, production-ready single-page HTML store. Style: ${prompt.style || 'modern, clean'}. Accent color: ${prompt.color || '#C8F135'}. Include: sticky nav, hero with CTA, featured products (3-4 with emoji placeholders), benefits section, testimonials, footer. Make it fully mobile-responsive. Output ONLY the HTML, no explanation.`
-      userMessage = `Create a dropshipping store for: ${prompt.description}`
+      systemPrompt = `You are an expert dropshipping store web designer. Generate a complete, beautiful, production-ready single-page HTML store. IMPORTANT: Use a WHITE or light background with dark text so the store is clearly readable. Style: ${prompt.style || 'modern, clean'}. Accent color: ${prompt.color || '#C8F135'} for buttons and highlights only. Include: sticky nav, hero section with headline and CTA button, 3-4 product cards with prices, benefits section, testimonials, footer with links. All text must be dark and clearly visible. Make it fully mobile-responsive. Output ONLY the complete HTML from <!DOCTYPE html> to </html>, no explanation, no markdown.`
+      userMessage = `Create a professional dropshipping store for: ${prompt.description}. Make it look like a real Shopify store with white background, clean layout, and professional product listings.`
     } else if (type === 'refine') {
       systemPrompt = `You are an expert web designer. Modify the provided HTML store based on the user's instruction. Return ONLY the complete updated HTML.`
       userMessage = `Here is the store HTML:\n\n${html}\n\nModify it: "${instruction}"\n\nReturn ONLY the complete updated HTML.`
