@@ -6,443 +6,134 @@
 <title>DropLaunch — AI Store Builder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const _supabase = supabase.createClient(
+  'https://zjsvctzkavpehosjqsgj.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpqc3ZjdHprYXZwZWhvc2pxc2dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDQwMzAsImV4cCI6MjA5NDYyMDAzMH0.4FhKatrf-2lvMF5H5jS3wmXz7K3oL3nciiekCOm7WXs'
+)
+let currentUser = null
+let currentStoreId = null
+
+async function initBuilder() {
+  const { data: { session } } = await _supabase.auth.getSession()
+  if (!session) { window.location = 'login.html'; return }
+  currentUser = session.user
+}
+window.addEventListener('DOMContentLoaded', initBuilder)
+</script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --black: #0A0A0B;
-  --white: #FAFAF8;
-  --accent: #C8F135;
-  --accent-dim: rgba(200,241,53,0.12);
-  --accent-border: rgba(200,241,53,0.25);
-  --mid: #141416;
-  --card: #111113;
-  --border: rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.14);
-  --muted: #777770;
-  --font-d: 'Syne', sans-serif;
-  --font-b: 'DM Sans', sans-serif;
+  --black: #0A0A0B; --white: #FAFAF8; --accent: #C8F135; --accent-dim: rgba(200,241,53,0.12);
+  --accent-border: rgba(200,241,53,0.25); --mid: #141416; --card: #111113; --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14); --muted: #777770; --font-d: 'Syne', sans-serif; --font-b: 'DM Sans', sans-serif;
 }
 html, body { height: 100%; }
-body {
-  background: var(--black);
-  color: var(--white);
-  font-family: var(--font-b);
-  font-size: 15px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* ── TOP BAR ── */
-.topbar {
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--mid);
-  flex-shrink: 0;
-  gap: 12px;
-}
-.topbar-logo {
-  font-family: var(--font-d);
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  display: flex; align-items: center; gap: 7px;
-  white-space: nowrap;
-}
+body { background: var(--black); color: var(--white); font-family: var(--font-b); font-size: 15px; overflow: hidden; display: flex; flex-direction: column; }
+.topbar { height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: var(--mid); border-bottom: 1px solid var(--border); flex-shrink: 0; gap: 12px; }
+.topbar-logo { font-family: var(--font-d); font-size: 17px; font-weight: 800; letter-spacing: -0.03em; display: flex; align-items: center; gap: 7px; white-space: nowrap; text-decoration: none; color: var(--white); }
 .logo-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; }
-
-.topbar-prompt {
-  flex: 1;
-  max-width: 700px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-#prompt-input {
-  flex: 1;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border2);
-  border-radius: 8px;
-  padding: 9px 14px;
-  color: var(--white);
-  font-family: var(--font-b);
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.2s;
-}
+.topbar-prompt { flex: 1; max-width: 700px; display: flex; gap: 8px; align-items: center; }
+#prompt-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border2); border-radius: 8px; padding: 9px 14px; color: var(--white); font-family: var(--font-b); font-size: 13px; outline: none; transition: border-color 0.2s; }
 #prompt-input::placeholder { color: var(--muted); }
 #prompt-input:focus { border-color: rgba(200,241,53,0.4); }
-
-#generate-btn {
-  background: var(--accent);
-  color: var(--black);
-  border: none;
-  padding: 9px 20px;
-  border-radius: 8px;
-  font-family: var(--font-b);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  display: flex; align-items: center; gap: 7px;
-  transition: opacity 0.2s, transform 0.15s;
-}
-#generate-btn:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
-#generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
+#generate-btn { background: var(--accent); color: var(--black); border: none; padding: 9px 20px; border-radius: 8px; font-family: var(--font-b); font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 7px; transition: opacity 0.2s; }
+#generate-btn:hover:not(:disabled) { opacity: 0.85; }
+#generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .topbar-actions { display: flex; gap: 8px; align-items: center; }
-
-.btn-sm {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--border);
-  color: var(--white);
-  padding: 7px 14px;
-  border-radius: 7px;
-  font-family: var(--font-b);
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-  white-space: nowrap;
-}
-.btn-sm:hover { background: rgba(255,255,255,0.1); border-color: var(--border2); }
+.btn-sm { background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--white); padding: 7px 14px; border-radius: 7px; font-family: var(--font-b); font-size: 12px; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
+.btn-sm:hover { background: rgba(255,255,255,0.1); }
 .btn-sm.accent { background: var(--accent); color: var(--black); border-color: transparent; font-weight: 500; }
 .btn-sm.accent:hover { opacity: 0.85; }
-
-/* ── MAIN LAYOUT ── */
-.app-body {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-/* ── LEFT PANEL ── */
-.left-panel {
-  width: 240px;
-  min-width: 240px;
-  background: var(--mid);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.panel-section {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-}
-.panel-title {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 10px;
-}
-
+.app-body { display: flex; flex: 1; overflow: hidden; }
+.left-panel { width: 240px; min-width: 240px; background: var(--mid); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.panel-section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.panel-title { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
 .page-list { display: flex; flex-direction: column; gap: 2px; }
-.page-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--muted);
-  transition: background 0.15s, color 0.15s;
-  border: 1px solid transparent;
-}
+.page-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--muted); transition: background 0.15s, color 0.15s; border: 1px solid transparent; }
 .page-item:hover { background: rgba(255,255,255,0.05); color: var(--white); }
 .page-item.active { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
 .page-item .pi { font-size: 14px; }
-
 .style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.style-chip {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 6px;
-  text-align: center;
-  cursor: pointer;
-  font-size: 11px;
-  color: var(--muted);
-  transition: all 0.15s;
-}
+.style-chip { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 6px; padding: 8px 6px; text-align: center; cursor: pointer; font-size: 11px; color: var(--muted); transition: all 0.15s; }
 .style-chip:hover { background: rgba(255,255,255,0.08); color: var(--white); }
 .style-chip.active { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
 .style-chip .sc-icon { font-size: 16px; display: block; margin-bottom: 4px; }
-
 .color-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.color-swatch {
-  width: 26px; height: 26px;
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: transform 0.15s, border-color 0.15s;
-}
+.color-swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s, border-color 0.15s; }
 .color-swatch:hover { transform: scale(1.15); }
 .color-swatch.active { border-color: var(--white); }
-
 .font-list { display: flex; flex-direction: column; gap: 4px; }
-.font-item {
-  padding: 7px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--muted);
-  border: 1px solid transparent;
-  transition: all 0.15s;
-}
+.font-item { padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--muted); border: 1px solid transparent; transition: all 0.15s; }
 .font-item:hover { color: var(--white); background: rgba(255,255,255,0.05); }
 .font-item.active { color: var(--accent); background: var(--accent-dim); border-color: var(--accent-border); }
-
 .left-panel-scroll { overflow-y: auto; flex: 1; }
 .left-panel-scroll::-webkit-scrollbar { width: 4px; }
 .left-panel-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-
-/* ── PREVIEW AREA ── */
-.preview-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: #1a1a1c;
-}
-
-.preview-toolbar {
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  background: var(--mid);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
+.preview-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #1a1a1c; }
+.preview-toolbar { height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--mid); border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .viewport-btns { display: flex; gap: 4px; }
-.vp-btn {
-  background: none;
-  border: 1px solid transparent;
-  color: var(--muted);
-  width: 28px; height: 28px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s;
-}
+.vp-btn { background: none; border: 1px solid transparent; color: var(--muted); width: 28px; height: 28px; border-radius: 5px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
 .vp-btn:hover { color: var(--white); background: rgba(255,255,255,0.06); }
 .vp-btn.active { color: var(--white); background: rgba(255,255,255,0.1); border-color: var(--border2); }
-
-.url-bar {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 4px 12px;
-  font-size: 12px;
-  color: var(--muted);
-  min-width: 240px;
-  text-align: center;
-}
-
+.url-bar { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 6px; padding: 4px 12px; font-size: 12px; color: var(--muted); min-width: 240px; text-align: center; }
 .preview-status { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
 .status-dot.live { background: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,0.5); }
-
-.preview-frame-wrap {
-  flex: 1;
-  overflow: auto;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 20px;
-}
-.preview-frame-wrap::-webkit-scrollbar { width: 6px; }
-.preview-frame-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-
-#preview-iframe {
-  background: white;
-  border-radius: 10px;
-  border: none;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.5);
-  transition: width 0.3s ease;
-}
+.preview-frame-wrap { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 20px; }
+#preview-iframe { background: white; border-radius: 10px; border: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.5); transition: width 0.3s ease; }
 #preview-iframe.desktop { width: 100%; max-width: 1200px; height: 800px; }
-#preview-iframe.tablet  { width: 768px;  height: 800px; }
-#preview-iframe.mobile  { width: 390px;  height: 800px; }
-
-/* ── EMPTY STATE ── */
-.empty-state {
-  width: 100%; height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 40px;
-}
+#preview-iframe.tablet { width: 768px; height: 800px; }
+#preview-iframe.mobile { width: 390px; height: 800px; }
+.empty-state { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; }
 .empty-icon { font-size: 52px; margin-bottom: 20px; opacity: 0.6; }
-.empty-state h2 {
-  font-family: var(--font-d);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--white);
-  margin-bottom: 10px;
-}
+.empty-state h2 { font-family: var(--font-d); font-size: 22px; font-weight: 700; color: var(--white); margin-bottom: 10px; }
 .empty-state p { font-size: 14px; color: var(--muted); max-width: 340px; line-height: 1.6; margin-bottom: 24px; }
-
 .example-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-.example-pill {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border2);
-  color: var(--muted);
-  font-size: 12px;
-  padding: 6px 14px;
-  border-radius: 100px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
+.example-pill { background: rgba(255,255,255,0.05); border: 1px solid var(--border2); color: var(--muted); font-size: 12px; padding: 6px 14px; border-radius: 100px; cursor: pointer; transition: all 0.15s; }
 .example-pill:hover { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
-
-/* ── LOADING ── */
-.loading-overlay {
-  display: none;
-  position: absolute;
-  inset: 0;
-  background: rgba(10,10,11,0.85);
-  backdrop-filter: blur(8px);
-  z-index: 50;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
+.loading-overlay { display: none; position: absolute; inset: 0; background: rgba(10,10,11,0.85); backdrop-filter: blur(8px); z-index: 50; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .loading-overlay.show { display: flex; }
-.loading-spinner {
-  width: 48px; height: 48px;
-  border: 3px solid rgba(200,241,53,0.2);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 20px;
-}
+.loading-spinner { width: 48px; height: 48px; border: 3px solid rgba(200,241,53,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 20px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-steps { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; }
-.loading-step {
-  font-size: 13px;
-  color: var(--muted);
-  display: flex; align-items: center; gap: 8px;
-  transition: color 0.3s;
-}
+.loading-step { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; transition: color 0.3s; }
 .loading-step.done { color: var(--accent); }
 .loading-step.active { color: var(--white); }
 .step-icon { font-size: 14px; width: 20px; }
-
-/* ── EDIT PANEL (right) ── */
-.edit-panel {
-  width: 0;
-  overflow: hidden;
-  background: var(--mid);
-  border-left: 1px solid var(--border);
-  transition: width 0.3s ease;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-}
+.edit-panel { width: 0; overflow: hidden; background: var(--mid); border-left: 1px solid var(--border); transition: width 0.3s ease; flex-shrink: 0; display: flex; flex-direction: column; }
 .edit-panel.open { width: 280px; }
-
-.edit-panel-header {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-}
-.edit-panel-header span {
-  font-family: var(--font-d);
-  font-size: 13px; font-weight: 700;
-}
-.close-edit {
-  background: none; border: none; color: var(--muted);
-  cursor: pointer; font-size: 18px; padding: 2px 6px;
-  border-radius: 4px;
-}
-.close-edit:hover { color: var(--white); background: rgba(255,255,255,0.08); }
-
+.edit-panel-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.edit-panel-header span { font-family: var(--font-d); font-size: 13px; font-weight: 700; }
+.close-edit { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 2px 6px; border-radius: 4px; }
+.close-edit:hover { color: var(--white); }
 .edit-fields { padding: 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; }
 .edit-field label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px; }
-.edit-field input, .edit-field textarea, .edit-field select {
-  width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border2);
-  border-radius: 7px;
-  padding: 8px 11px;
-  color: var(--white);
-  font-family: var(--font-b);
-  font-size: 13px;
-  outline: none;
-  resize: none;
-  transition: border-color 0.2s;
-}
-.edit-field input:focus, .edit-field textarea:focus { border-color: rgba(200,241,53,0.4); }
+.edit-field input, .edit-field textarea { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border2); border-radius: 7px; padding: 8px 11px; color: var(--white); font-family: var(--font-b); font-size: 13px; outline: none; resize: none; }
 .edit-field textarea { min-height: 72px; line-height: 1.5; }
-.apply-btn {
-  width: 100%;
-  background: var(--accent);
-  color: var(--black);
-  border: none;
-  padding: 10px;
-  border-radius: 7px;
-  font-family: var(--font-b);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  margin-top: 4px;
-}
-.apply-btn:hover { opacity: 0.88; }
-
-/* ── TOAST ── */
-.toast {
-  position: fixed;
-  bottom: 24px; right: 24px;
-  background: var(--card);
-  border: 1px solid var(--border2);
-  border-radius: 10px;
-  padding: 12px 18px;
-  font-size: 13px;
-  color: var(--white);
-  display: flex; align-items: center; gap: 10px;
-  z-index: 999;
-  transform: translateY(80px);
-  opacity: 0;
-  transition: all 0.3s ease;
-  pointer-events: none;
-}
+.apply-btn { width: 100%; background: var(--accent); color: var(--black); border: none; padding: 10px; border-radius: 7px; font-family: var(--font-b); font-size: 13px; font-weight: 500; cursor: pointer; margin-top: 4px; }
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--card); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 18px; font-size: 13px; color: var(--white); display: flex; align-items: center; gap: 10px; z-index: 999; transform: translateY(80px); opacity: 0; transition: all 0.3s ease; pointer-events: none; max-width: 360px; }
 .toast.show { transform: translateY(0); opacity: 1; }
-.toast.success { border-color: rgba(74,222,128,0.3); }
-.toast.error { border-color: rgba(239,68,68,0.3); }
+.toast.success { border-color: rgba(74,222,128,.3); }
+.toast.error { border-color: rgba(255,92,58,.3); }
 </style>
 </head>
 <body>
-
-<!-- TOP BAR -->
 <div class="topbar">
-  <div class="topbar-logo"><span class="logo-dot"></span>DropLaunch</div>
+  <a href="dashboard.html" class="topbar-logo"><span class="logo-dot"></span>DropLaunch</a>
   <div class="topbar-prompt">
-    <input id="prompt-input" type="text" placeholder="Describe your store… e.g. 'Minimalist pet accessories brand, earthy tones, targeting dog owners'" />
+    <input id="prompt-input" type="text" placeholder="Describe your store… e.g. 'Minimalist pet accessories, earthy tones, targeting dog owners'" />
     <button id="generate-btn" onclick="generateSite()">⚡ Build Store</button>
   </div>
   <div class="topbar-actions">
     <button class="btn-sm" onclick="toggleEditPanel()">✏️ Edit</button>
     <button class="btn-sm" onclick="exportSite()">⬇ Export</button>
-    <button class="btn-sm accent" onclick="publishSite()">🚀 Publish</button>
+    <button class="btn-sm accent" onclick="saveStore()">💾 Save Store</button>
   </div>
 </div>
 
-<!-- MAIN APP -->
 <div class="app-body">
-
-  <!-- LEFT PANEL -->
   <div class="left-panel">
     <div class="left-panel-scroll">
       <div class="panel-section">
@@ -454,7 +145,6 @@ body {
           <div class="page-item" onclick="switchPage(this,'contact')"><span class="pi">✉️</span> Contact</div>
         </div>
       </div>
-
       <div class="panel-section">
         <div class="panel-title">Style</div>
         <div class="style-grid">
@@ -464,29 +154,25 @@ body {
           <div class="style-chip" onclick="setStyle(this,'luxury')"><span class="sc-icon">♦</span>Luxury</div>
         </div>
       </div>
-
       <div class="panel-section">
         <div class="panel-title">Accent Color</div>
         <div class="color-row">
-          <div class="color-swatch active" style="background:#C8F135" onclick="setColor(this,'#C8F135','#0A0A0B')" title="Lime"></div>
-          <div class="color-swatch" style="background:#FF5C3A" onclick="setColor(this,'#FF5C3A','#fff')" title="Coral"></div>
-          <div class="color-swatch" style="background:#5B7FFF" onclick="setColor(this,'#5B7FFF','#fff')" title="Blue"></div>
-          <div class="color-swatch" style="background:#FF4ECD" onclick="setColor(this,'#FF4ECD','#fff')" title="Pink"></div>
-          <div class="color-swatch" style="background:#FFBE0B" onclick="setColor(this,'#FFBE0B','#0A0A0B')" title="Yellow"></div>
-          <div class="color-swatch" style="background:#00E5B0" onclick="setColor(this,'#00E5B0','#0A0A0B')" title="Teal"></div>
+          <div class="color-swatch active" style="background:#C8F135" onclick="setColor(this,'#C8F135','#0A0A0B')"></div>
+          <div class="color-swatch" style="background:#FF5C3A" onclick="setColor(this,'#FF5C3A','#fff')"></div>
+          <div class="color-swatch" style="background:#5B7FFF" onclick="setColor(this,'#5B7FFF','#fff')"></div>
+          <div class="color-swatch" style="background:#FF4ECD" onclick="setColor(this,'#FF4ECD','#fff')"></div>
+          <div class="color-swatch" style="background:#FFBE0B" onclick="setColor(this,'#FFBE0B','#0A0A0B')"></div>
+          <div class="color-swatch" style="background:#00E5B0" onclick="setColor(this,'#00E5B0','#0A0A0B')"></div>
         </div>
       </div>
-
       <div class="panel-section">
         <div class="panel-title">Font</div>
         <div class="font-list">
           <div class="font-item active" onclick="setFont(this,'Syne')" style="font-family:'Syne'">Syne — Modern</div>
           <div class="font-item" onclick="setFont(this,'Playfair Display')" style="font-family:'Playfair Display',serif">Playfair — Luxury</div>
           <div class="font-item" onclick="setFont(this,'Space Mono')" style="font-family:'Space Mono',monospace">Space Mono — Tech</div>
-          <div class="font-item" onclick="setFont(this,'DM Serif Display')" style="font-family:'DM Serif Display',serif">DM Serif — Editorial</div>
         </div>
       </div>
-
       <div class="panel-section">
         <div class="panel-title">Refine with AI</div>
         <textarea id="refine-input" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:7px;padding:9px 11px;color:var(--white);font-family:var(--font-b);font-size:12px;resize:none;outline:none;min-height:60px;line-height:1.5" placeholder="e.g. Make the hero bolder, add a trust badge…"></textarea>
@@ -495,7 +181,6 @@ body {
     </div>
   </div>
 
-  <!-- PREVIEW -->
   <div class="preview-area" style="position:relative;">
     <div class="preview-toolbar">
       <div class="viewport-btns">
@@ -509,25 +194,20 @@ body {
         <span id="status-text">Ready to build</span>
       </div>
     </div>
-
     <div class="preview-frame-wrap" id="preview-wrap">
-      <!-- empty state -->
       <div class="empty-state" id="empty-state">
         <div class="empty-icon">⚡</div>
         <h2>Describe your store above</h2>
-        <p>Type what you're selling, your style, and your target customer. The AI will build you a complete dropshipping store in seconds.</p>
+        <p>Type what you're selling, your style, and your target customer. The AI builds a complete store in seconds.</p>
         <div class="example-pills">
           <div class="example-pill" onclick="useExample(this)">Minimalist phone cases, Gen Z, dark aesthetic</div>
           <div class="example-pill" onclick="useExample(this)">Luxury candles, women 25-40, earthy tones</div>
           <div class="example-pill" onclick="useExample(this)">Gym supplements, athletes, bold red and black</div>
           <div class="example-pill" onclick="useExample(this)">Pet accessories, dog owners, playful and colorful</div>
-          <div class="example-pill" onclick="useExample(this)">Vintage streetwear, fashion-forward, retro vibes</div>
         </div>
       </div>
       <iframe id="preview-iframe" class="desktop" style="display:none"></iframe>
     </div>
-
-    <!-- Loading overlay -->
     <div class="loading-overlay" id="loading-overlay">
       <div class="loading-spinner"></div>
       <div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--white);margin-bottom:6px">Building your store…</div>
@@ -542,226 +222,87 @@ body {
     </div>
   </div>
 
-  <!-- EDIT PANEL -->
   <div class="edit-panel" id="edit-panel">
-    <div class="edit-panel-header">
-      <span>Edit Content</span>
-      <button class="close-edit" onclick="toggleEditPanel()">×</button>
-    </div>
+    <div class="edit-panel-header"><span>Edit Content</span><button class="close-edit" onclick="toggleEditPanel()">×</button></div>
     <div class="edit-fields">
-      <div class="edit-field">
-        <label>Store Name</label>
-        <input type="text" id="edit-name" placeholder="Your store name" />
-      </div>
-      <div class="edit-field">
-        <label>Tagline</label>
-        <input type="text" id="edit-tagline" placeholder="One-line brand statement" />
-      </div>
-      <div class="edit-field">
-        <label>Hero Headline</label>
-        <textarea id="edit-headline" placeholder="Main headline text"></textarea>
-      </div>
-      <div class="edit-field">
-        <label>Hero Subtext</label>
-        <textarea id="edit-subtext" placeholder="Supporting description"></textarea>
-      </div>
-      <div class="edit-field">
-        <label>CTA Button Text</label>
-        <input type="text" id="edit-cta" placeholder="e.g. Shop Now, Get Started" />
-      </div>
+      <div class="edit-field"><label>Store Name</label><input type="text" id="edit-name" placeholder="Your store name" /></div>
+      <div class="edit-field"><label>Hero Headline</label><textarea id="edit-headline" placeholder="Main headline text"></textarea></div>
+      <div class="edit-field"><label>Hero Subtext</label><textarea id="edit-subtext" placeholder="Supporting description"></textarea></div>
+      <div class="edit-field"><label>CTA Button Text</label><input type="text" id="edit-cta" placeholder="e.g. Shop Now" /></div>
       <button class="apply-btn" onclick="applyEdits()">Apply Changes ↗</button>
     </div>
   </div>
-
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ── STATE ──
-let currentHTML = '';
-let accentColor = '#C8F135';
-let accentText = '#0A0A0B';
-let fontFamily = 'Syne';
-let currentStyle = 'modern';
-let currentPage = 'home';
-let isBuilt = false;
+let currentHTML = ''
+let accentColor = '#C8F135', accentText = '#0A0A0B'
+let fontFamily = 'Syne', currentStyle = 'modern', isBuilt = false
 
-// ── EXAMPLE PILLS ──
-function useExample(el) {
-  document.getElementById('prompt-input').value = el.textContent;
-  document.getElementById('prompt-input').focus();
-}
-
-// ── VIEWPORT ──
-function setViewport(mode, btn) {
-  document.querySelectorAll('.vp-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const iframe = document.getElementById('preview-iframe');
-  iframe.className = mode;
-}
-
-// ── PAGE SWITCH ──
-function switchPage(el, page) {
-  document.querySelectorAll('.page-item').forEach(p => p.classList.remove('active'));
-  el.classList.add('active');
-  currentPage = page;
-  if (isBuilt) injectPageContent(page);
-}
-
-// ── STYLE ──
-function setStyle(el, style) {
-  document.querySelectorAll('.style-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  currentStyle = style;
-  if (isBuilt) applyStyleToPreview();
-}
-
-function applyStyleToPreview() {
-  const iframe = document.getElementById('preview-iframe');
-  if (!iframe.contentDocument) return;
-  // Will regenerate styles dynamically — for live builds, just retrigger
-}
-
-// ── COLOR ──
+function useExample(el) { document.getElementById('prompt-input').value = el.textContent }
+function setViewport(mode, btn) { document.querySelectorAll('.vp-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); document.getElementById('preview-iframe').className = mode }
+function switchPage(el, page) { document.querySelectorAll('.page-item').forEach(p => p.classList.remove('active')); el.classList.add('active') }
+function setStyle(el, style) { document.querySelectorAll('.style-chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); currentStyle = style }
 function setColor(el, color, text) {
-  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
-  el.classList.add('active');
-  accentColor = color;
-  accentText = text;
-  if (isBuilt) {
-    const iframe = document.getElementById('preview-iframe');
-    try {
-      const doc = iframe.contentDocument || iframe.contentWindow.document;
-      doc.querySelectorAll('[data-accent]').forEach(node => {
-        node.style.background = accentColor;
-        node.style.color = accentText;
-      });
-      doc.querySelectorAll('[data-accent-text]').forEach(node => {
-        node.style.color = accentColor;
-      });
-      // Update CSS variable
-      doc.documentElement.style.setProperty('--acc', accentColor);
-      doc.documentElement.style.setProperty('--acc-t', accentText);
-    } catch(e) {}
-  }
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active')); el.classList.add('active')
+  accentColor = color; accentText = text
+  if (isBuilt) { try { const doc = document.getElementById('preview-iframe').contentDocument; doc.querySelectorAll('[data-accent]').forEach(n => { n.style.background = color; n.style.color = text }) } catch(e){} }
 }
-
-// ── FONT ──
 function setFont(el, font) {
-  document.querySelectorAll('.font-item').forEach(f => f.classList.remove('active'));
-  el.classList.add('active');
-  fontFamily = font;
-  if (isBuilt) {
-    const iframe = document.getElementById('preview-iframe');
-    try {
-      const doc = iframe.contentDocument || iframe.contentWindow.document;
-      doc.querySelectorAll('[data-heading]').forEach(h => {
-        h.style.fontFamily = `'${font}', sans-serif`;
-      });
-    } catch(e) {}
-  }
+  document.querySelectorAll('.font-item').forEach(f => f.classList.remove('active')); el.classList.add('active'); fontFamily = font
+  if (isBuilt) { try { const doc = document.getElementById('preview-iframe').contentDocument; doc.querySelectorAll('[data-heading]').forEach(h => h.style.fontFamily = `'${font}', sans-serif`) } catch(e){} }
 }
 
-// ── GENERATE ──
 async function generateSite() {
-  const prompt = document.getElementById('prompt-input').value.trim();
-  if (!prompt) {
-    showToast('⚠️ Please describe your store first', 'error');
-    return;
-  }
-
-  const btn = document.getElementById('generate-btn');
-  btn.disabled = true;
-  btn.textContent = '⏳ Building…';
-
-  showLoading(true);
-  animateSteps();
-
+  const prompt = document.getElementById('prompt-input').value.trim()
+  if (!prompt) { showToast('⚠️ Please describe your store first', 'error'); return }
+  const btn = document.getElementById('generate-btn')
+  btn.disabled = true; btn.textContent = '⏳ Building…'
+  showLoading(true); animateSteps()
   try {
-    const siteHTML = await callClaude(prompt);
-    currentHTML = siteHTML;
-    isBuilt = true;
-    renderPreview(siteHTML);
-    document.getElementById('url-bar').textContent = `droplaunch.app/store/${slugify(prompt)}`;
-    setStatus('live', '✓ Store ready');
-    showToast('✅ Your store is ready!', 'success');
+    const siteHTML = await callClaude(prompt)
+    currentHTML = siteHTML; isBuilt = true
+    renderPreview(siteHTML)
+    document.getElementById('url-bar').textContent = `droplaunch.app/store/${slugify(prompt)}`
+    setStatus('live', '✓ Store ready')
+    showToast('✅ Your store is ready! Hit Save to keep it.', 'success')
   } catch(err) {
-    showToast('❌ Generation failed. Please try again.', 'error');
-    setStatus('', 'Error — try again');
-    console.error(err);
+    showToast('❌ Generation failed. Please try again.', 'error')
+    setStatus('', 'Error — try again')
   } finally {
-    showLoading(false);
-    btn.disabled = false;
-    btn.innerHTML = '⚡ Rebuild';
+    showLoading(false); btn.disabled = false; btn.innerHTML = '⚡ Rebuild'
   }
 }
 
-// ── REFINE ──
 async function refineSite() {
-  if (!isBuilt) { showToast('⚠️ Build a store first', 'error'); return; }
-  const instruction = document.getElementById('refine-input').value.trim();
-  if (!instruction) return;
-
-  showLoading(true);
-
+  if (!isBuilt) { showToast('⚠️ Build a store first', 'error'); return }
+  const instruction = document.getElementById('refine-input').value.trim()
+  if (!instruction) return
+  showLoading(true)
   try {
-    const refined = await callClaudeRefine(currentHTML, instruction);
-    currentHTML = refined;
-    renderPreview(refined);
-    showToast('✨ Store updated!', 'success');
-  } catch(e) {
-    showToast('❌ Refinement failed', 'error');
-  } finally {
-    showLoading(false);
-  }
+    const refined = await callClaudeRefine(currentHTML, instruction)
+    currentHTML = refined; renderPreview(refined)
+    showToast('✨ Store updated!', 'success')
+  } catch(e) { showToast('❌ Refinement failed', 'error') }
+  finally { showLoading(false) }
 }
 
-// ── ANTHROPIC API ──
 async function callClaude(userPrompt) {
-  const styleGuide = {
-    modern: 'clean, contemporary, geometric shapes, strong typography, lots of whitespace',
-    bold: 'high contrast, large typography, striking visuals, dark backgrounds with bright accents',
-    minimal: 'ultra-clean, minimal elements, monochromatic, refined spacing, subtle details',
-    luxury: 'premium feel, gold/dark palette, elegant serif fonts, sophisticated spacing'
-  }[currentStyle];
-
-  const systemPrompt = `You are an expert dropshipping store web designer. Generate a complete, beautiful, production-ready single-page HTML store.
-
-REQUIREMENTS:
-- Full self-contained HTML with embedded CSS and JS
-- Style: ${styleGuide}
-- Accent color: ${accentColor} (text on accent: ${accentText})
-- Font: '${fontFamily}' for headings (import from Google Fonts)
-- Include these sections: sticky nav, hero with CTA, featured products (3-4 products with placeholder emoji/icons), benefits/features section, testimonials (2-3), and footer
-- Add data-accent to all accent-colored buttons/elements
-- Add data-accent-text to accent-colored text
-- Add data-heading to all heading elements
-- Make it fully responsive and mobile-friendly
-- Products should have realistic-sounding names, prices ($19.99–$89.99), and short descriptions
-- Use CSS animations for subtle load effects
-- The store must look genuinely professional and premium, not like a template
-- NO external images — use emoji, CSS shapes, or gradient placeholders instead
-- Include a working "Add to Cart" button that shows a toast notification
-- Output ONLY the HTML — no markdown, no explanation, no code fences`;
-
+  const styleGuide = { modern:'clean, contemporary, geometric, strong typography', bold:'high contrast, large typography, dark backgrounds, bright accents', minimal:'ultra-clean, monochromatic, refined spacing', luxury:'premium, gold/dark palette, elegant, sophisticated' }[currentStyle]
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4000,
-      system: systemPrompt,
+      model: 'claude-sonnet-4-20250514', max_tokens: 4000,
+      system: `You are an expert dropshipping store web designer. Generate a complete, beautiful, production-ready single-page HTML store. Style: ${styleGuide}. Accent color: ${accentColor} (text on accent: ${accentText}). Font: '${fontFamily}'. Include: sticky nav, hero with CTA, featured products (3-4 with emoji placeholders), benefits, testimonials, footer. Add data-accent to accent-colored elements, data-heading to all headings. Mobile-responsive. Output ONLY the HTML.`,
       messages: [{ role: 'user', content: `Create a dropshipping store for: ${userPrompt}` }]
     })
-  });
-
-  if (!response.ok) throw new Error(`API error: ${response.status}`);
-  const data = await response.json();
-  const text = data.content.map(c => c.text || '').join('');
-  // Strip any accidental markdown fences
-  return text.replace(/^```html\n?/,'').replace(/\n?```$/,'').trim();
+  })
+  if (!response.ok) throw new Error('API error')
+  const data = await response.json()
+  return data.content.map(c => c.text || '').join('').replace(/^```html\n?/, '').replace(/\n?```$/, '').trim()
 }
 
 async function callClaudeRefine(html, instruction) {
@@ -769,149 +310,82 @@ async function callClaudeRefine(html, instruction) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4000,
-      messages: [{
-        role: 'user',
-        content: `Here is an existing store HTML:\n\n${html.substring(0, 6000)}\n\nModify it according to this instruction: "${instruction}"\n\nReturn ONLY the complete updated HTML, no explanation, no markdown fences.`
-      }]
+      model: 'claude-sonnet-4-20250514', max_tokens: 4000,
+      messages: [{ role: 'user', content: `Here is store HTML:\n\n${html.substring(0, 6000)}\n\nModify it: "${instruction}"\n\nReturn ONLY the complete updated HTML.` }]
     })
-  });
-  if (!response.ok) throw new Error(`API error: ${response.status}`);
-  const data = await response.json();
-  return data.content.map(c => c.text || '').join('').replace(/^```html\n?/,'').replace(/\n?```$/,'').trim();
+  })
+  if (!response.ok) throw new Error('API error')
+  const data = await response.json()
+  return data.content.map(c => c.text || '').join('').replace(/^```html\n?/, '').replace(/\n?```$/, '').trim()
 }
 
-// ── RENDER ──
-function renderPreview(html) {
-  const empty = document.getElementById('empty-state');
-  const iframe = document.getElementById('preview-iframe');
-  empty.style.display = 'none';
-  iframe.style.display = 'block';
-
-  const doc = iframe.contentDocument || iframe.contentWindow.document;
-  doc.open();
-  doc.write(html);
-  doc.close();
-}
-
-function injectPageContent(page) {
-  // For a real app this would swap content. Here we just show a toast.
-  showToast(`📄 Viewing: ${page} page`, 'success');
-}
-
-// ── EDIT PANEL ──
-function toggleEditPanel() {
-  const panel = document.getElementById('edit-panel');
-  panel.classList.toggle('open');
-  if (panel.classList.contains('open') && isBuilt) populateEditFields();
-}
-
-function populateEditFields() {
-  const iframe = document.getElementById('preview-iframe');
+// Save store to Supabase
+async function saveStore() {
+  if (!currentHTML) { showToast('⚠️ Build a store first', 'error'); return }
+  if (!currentUser) { showToast('⚠️ Please sign in first', 'error'); return }
+  const prompt = document.getElementById('prompt-input').value.trim()
+  const storeName = document.getElementById('edit-name').value.trim() || prompt.substring(0, 30) || 'My Store'
   try {
-    const doc = iframe.contentDocument || iframe.contentWindow.document;
-    const h1 = doc.querySelector('h1');
-    const nav = doc.querySelector('nav');
-    if (h1) document.getElementById('edit-headline').value = h1.textContent;
-  } catch(e) {}
+    if (currentStoreId) {
+      await _supabase.from('stores').update({ name: storeName, html_content: currentHTML, updated_at: new Date().toISOString() }).eq('id', currentStoreId)
+    } else {
+      const { data, error } = await _supabase.from('stores').insert({ user_id: currentUser.id, name: storeName, html_content: currentHTML, status: 'draft', description: prompt }).select().single()
+      if (error) throw error
+      currentStoreId = data.id
+    }
+    showToast('💾 Store saved to your dashboard!', 'success')
+  } catch(e) { showToast('❌ Save failed: ' + e.message, 'error') }
 }
+
+function renderPreview(html) {
+  document.getElementById('empty-state').style.display = 'none'
+  const iframe = document.getElementById('preview-iframe')
+  iframe.style.display = 'block'
+  const doc = iframe.contentDocument || iframe.contentWindow.document
+  doc.open(); doc.write(html); doc.close()
+}
+
+function toggleEditPanel() { document.getElementById('edit-panel').classList.toggle('open') }
 
 function applyEdits() {
-  if (!isBuilt) { showToast('⚠️ Build a store first', 'error'); return; }
-  const name = document.getElementById('edit-name').value;
-  const tagline = document.getElementById('edit-tagline').value;
-  const headline = document.getElementById('edit-headline').value;
-  const subtext = document.getElementById('edit-subtext').value;
-  const cta = document.getElementById('edit-cta').value;
-
-  const iframe = document.getElementById('preview-iframe');
+  if (!isBuilt) { showToast('⚠️ Build a store first', 'error'); return }
+  const headline = document.getElementById('edit-headline').value
+  const subtext = document.getElementById('edit-subtext').value
+  const name = document.getElementById('edit-name').value
+  const cta = document.getElementById('edit-cta').value
   try {
-    const doc = iframe.contentDocument || iframe.contentWindow.document;
-    if (headline) { const h1 = doc.querySelector('h1'); if(h1) h1.textContent = headline; }
-    if (subtext) { const sub = doc.querySelector('h1 + p, .hero p, .hero-sub'); if(sub) sub.textContent = subtext; }
-    if (name) {
-      doc.querySelectorAll('.logo, .brand, nav a:first-child').forEach(el => { if(el.textContent.length < 30) el.textContent = name; });
-    }
-    if (cta) { doc.querySelectorAll('a[href="#shop"], .hero a, .hero button, .cta-btn').forEach(el => el.textContent = cta); }
-    showToast('✅ Changes applied!', 'success');
-  } catch(e) {
-    showToast('⚠️ Could not apply changes', 'error');
-  }
+    const doc = document.getElementById('preview-iframe').contentDocument
+    if (headline) { const h1 = doc.querySelector('h1'); if(h1) h1.textContent = headline }
+    if (subtext) { const sub = doc.querySelector('h1 + p, .hero p'); if(sub) sub.textContent = subtext }
+    if (cta) { doc.querySelectorAll('.hero button, .hero a[href]').forEach(el => { if(el.textContent.length < 30) el.textContent = cta }) }
+    showToast('✅ Changes applied!', 'success')
+  } catch(e) { showToast('⚠️ Could not apply changes', 'error') }
 }
 
-// ── EXPORT ──
 function exportSite() {
-  if (!currentHTML) { showToast('⚠️ Build a store first', 'error'); return; }
-  const blob = new Blob([currentHTML], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'my-store.html';
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('⬇ Downloaded as my-store.html', 'success');
+  if (!currentHTML) { showToast('⚠️ Build a store first', 'error'); return }
+  const blob = new Blob([currentHTML], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = 'my-store.html'; a.click()
+  URL.revokeObjectURL(url)
+  showToast('⬇ Downloaded as my-store.html', 'success')
 }
 
-// ── PUBLISH ──
-function publishSite() {
-  if (!isBuilt) { showToast('⚠️ Build a store first', 'error'); return; }
-  showToast('🚀 Publishing to droplaunch.app… (connect domain in settings)', 'success');
-}
-
-// ── LOADING ──
-function showLoading(show) {
-  const overlay = document.getElementById('loading-overlay');
-  overlay.classList.toggle('show', show);
-  if (!show) resetSteps();
-}
-
+function showLoading(show) { document.getElementById('loading-overlay').classList.toggle('show', show); if (!show) resetSteps() }
 function animateSteps() {
-  const steps = ['step-1','step-2','step-3','step-4','step-5'];
-  let i = 0;
+  const steps = ['step-1','step-2','step-3','step-4','step-5']
+  let i = 0
   const iv = setInterval(() => {
-    if (i > 0) document.getElementById(steps[i-1])?.classList.replace('active','done');
-    if (i < steps.length) {
-      document.getElementById(steps[i])?.classList.add('active');
-      i++;
-    } else {
-      clearInterval(iv);
-    }
-  }, 3500);
+    if (i > 0) document.getElementById(steps[i-1])?.classList.replace('active','done')
+    if (i < steps.length) { document.getElementById(steps[i])?.classList.add('active'); i++ } else clearInterval(iv)
+  }, 3500)
 }
-
-function resetSteps() {
-  ['step-1','step-2','step-3','step-4','step-5'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.classList.remove('active','done'); }
-  });
-}
-
-// ── STATUS ──
-function setStatus(type, text) {
-  const dot = document.getElementById('status-dot');
-  const label = document.getElementById('status-text');
-  dot.className = 'status-dot' + (type === 'live' ? ' live' : '');
-  label.textContent = text;
-}
-
-// ── TOAST ──
-function showToast(msg, type = 'success') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = `toast show ${type}`;
-  setTimeout(() => t.classList.remove('show'), 3500);
-}
-
-// ── UTILS ──
-function slugify(str) {
-  return str.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,30);
-}
-
-// ── ENTER KEY ──
-document.getElementById('prompt-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') generateSite();
-});
+function resetSteps() { ['step-1','step-2','step-3','step-4','step-5'].forEach(id => { const el = document.getElementById(id); if(el) { el.classList.remove('active','done') } }) }
+function setStatus(type, text) { document.getElementById('status-dot').className = 'status-dot' + (type === 'live' ? ' live' : ''); document.getElementById('status-text').textContent = text }
+function showToast(msg, type = 'success') { const t = document.getElementById('toast'); t.textContent = msg; t.className = `toast show ${type}`; clearTimeout(t._to); t._to = setTimeout(() => t.classList.remove('show'), 3500) }
+function slugify(str) { return str.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,30) }
+document.getElementById('prompt-input').addEventListener('keydown', e => { if (e.key === 'Enter') generateSite() })
 </script>
 </body>
 </html>
