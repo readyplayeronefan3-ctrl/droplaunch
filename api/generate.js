@@ -6,6 +6,10 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
+  // DEBUG - check if env var is being received
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) return res.status(500).json({ error: 'API key not found in environment' })
+
   try {
     const { type, prompt, html, instruction, topic } = req.body
 
@@ -29,11 +33,11 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'x-api-key': apiKey,
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: 'claude-haiku-4-5',
         max_tokens: 4000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }]
@@ -42,7 +46,7 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const err = await response.json()
-      return res.status(response.status).json({ error: err.error?.message || 'API error' })
+      return res.status(response.status).json({ error: err.error?.message || 'API error', key_prefix: apiKey.substring(0, 10) })
     }
 
     const data = await response.json()
