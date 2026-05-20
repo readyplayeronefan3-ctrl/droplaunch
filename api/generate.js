@@ -50,9 +50,9 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ error: err.error?.message || 'API error', key_prefix: apiKey.substring(0, 10) })
     }
 
-    const data = await response.json()
-    const text = data.content.map(c => c.text || '').join('')
-    return res.status(200).json({ result: text })
+const text = data.content.map(c => c.text || '').join('')
+const cleaned = text.replace(/^```html\n?/, '').replace(/^```\n?/, '').replace(/\n?```$/, '').trim()
+return res.status(200).json({ result: cleaned })
 
   } catch (err) {
     return res.status(500).json({ error: err.message || 'Server error' })
