@@ -17,9 +17,9 @@ export default async function handler(req, res) {
     let systemPrompt = ''
     let userMessage = ''
 
-    if (type === 'build') {
-      systemPrompt = `You are an expert dropshipping store web designer. Generate a complete, beautiful, production-ready single-page HTML store. IMPORTANT: Use a WHITE or light background with dark text so the store is clearly readable. Style: ${prompt.style || 'modern, clean'}. Accent color: ${prompt.color || '#C8F135'} for buttons and highlights only. Include: sticky nav, hero section with headline and CTA button, 3-4 product cards with prices, benefits section, testimonials, footer with links. All text must be dark and clearly visible. Make it fully mobile-responsive. Output ONLY the complete HTML from <!DOCTYPE html> to </html>, no explanation, no markdown.`
-      userMessage = `Create a professional dropshipping store for: ${prompt.description}. Make it look like a real Shopify store with white background, clean layout, and professional product listings.`
+  if (type === 'build') {
+      systemPrompt = `You are an expert ecommerce store designer. Generate a complete single-page HTML dropshipping store. CRITICAL RULES: Background MUST be white (#ffffff). All body text MUST be dark (#111111). Navigation background is white with dark text. Only use the accent color ${prompt.color || '#C8F135'} for buttons and highlights. Must look like a real Shopify store - bright, clean, professional. Include: navbar, hero section, 4 product cards with prices, features section, footer. Mobile responsive. Output ONLY complete HTML from <!DOCTYPE html> to </html>.`
+      userMessage = `Create a bright white professional dropshipping store for: ${prompt.description}`
     } else if (type === 'refine') {
       systemPrompt = `You are an expert web designer. Modify the provided HTML store based on the user's instruction. Return ONLY the complete updated HTML.`
       userMessage = `Here is the store HTML:\n\n${html}\n\nModify it: "${instruction}"\n\nReturn ONLY the complete updated HTML.`
