@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DropLaunch — AI Store Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const _supabase = supabase.createClient(
+  'https://zjsvctzkavpehosjqsgj.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpqc3ZjdHprYXZwZWhvc2pxc2dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDQwMzAsImV4cCI6MjA5NDYyMDAzMH0.4FhKatrf-2lvMF5H5jS3wmXz7K3oL3nciiekCOm7WXs'
+)
+let currentUser = null
+let currentStoreId = null
+async function initBuilder() {
+  const { data: { session } } = await _supabase.auth.getSession()
+  if (!session) { window.location = 'login.html'; return }
+  currentUser = session.user
+}
+window.addEventListener('DOMContentLoaded', initBuilder)
+</script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0A0A0B;
+  --mid: #141416;
+  --card: #111113;
+  --white: #F5F5F2;
+  --muted: #666662;
+  --muted2: #333330;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --accent: #C8F135;
+  --accent-t: #0A0A0B;
+  --accent-dim: rgba(200,241,53,0.1);
+  --accent-border: rgba(200,241,53,0.22);
+  --green: #4ade80;
+  --red: #FF5C3A;
+  --font-d: 'Syne', sans-serif;
+  --font-b: 'DM Sans', sans-serif;
+  --r: 8px;
+}
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--bg); color: var(--white); font-family: var(--font-b); font-size: 14px; display: flex; flex-direction: column; }
+
+/* ── TOPBAR ── */
+.topbar { height: 52px; flex-shrink: 0; display: flex; align-items: center; padding: 0 16px; background: var(--mid); border-bottom: 1px solid var(--border); gap: 10px; z-index: 10; }
+.topbar-logo { font-family: var(--font-d); font-size: 17px; font-weight: 800; letter-spacing: -0.03em; display: flex; align-items: center; gap: 7px; text-decoration: none; color: var(--white); white-space: nowrap; flex-shrink: 0; }
+.logo-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 6px rgba(200,241,53,0.5); }
+.topbar-prompt { flex: 1; display: flex; gap: 8px; align-items: center; min-width: 0; }
+#prompt-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border2); border-radius: var(--r); padding: 9px 14px; color: var(--white); font-family: var(--font-b); font-size: 13px; outline: none; transition: border-color 0.2s; min-width: 0; }
+#prompt-input::placeholder { color: var(--muted); }
+#prompt-input:focus { border-color: var(--accent-border); background: rgba(200,241,53,0.03); }
+#generate-btn { background: var(--accent); color: var(--accent-t); border: none; padding: 9px 18px; border-radius: var(--r); font-family: var(--font-b); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 7px; transition: all 0.2s; flex-shrink: 0; }
+#generate-btn:hover:not(:disabled) { opacity: 0.87; transform: translateY(-1px); }
+#generate-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.topbar-right { display: flex; gap: 7px; align-items: center; flex-shrink: 0; }
+.tbtn { background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--white); padding: 7px 13px; border-radius: var(--r); font-family: var(--font-b); font-size: 12px; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+.tbtn:hover { background: rgba(255,255,255,0.1); }
+.tbtn.save { background: var(--accent); color: var(--accent-t); border-color: transparent; font-weight: 600; }
+.tbtn.save:hover { opacity: 0.87; }
+
+/* ── LAYOUT ── */
+.app-body { display: flex; flex: 1; overflow: hidden; }
+
+/* ── LEFT PANEL ── */
+.left-panel { width: 256px; min-width: 256px; background: var(--mid); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+.lp-scroll { overflow-y: auto; flex: 1; }
+.lp-scroll::-webkit-scrollbar { width: 3px; }
+.lp-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+/* Panel sections */
+.ps { padding: 13px 14px; border-bottom: 1px solid var(--border); }
+.ps-title { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+
+/* Theme toggle */
+.theme-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.theme-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 10px 6px; border-radius: var(--r); border: 1px solid var(--border2); cursor: pointer; font-family: var(--font-b); font-size: 11px; font-weight: 500; color: var(--muted); background: rgba(255,255,255,0.02); transition: all 0.2s; }
+.theme-btn .ti { font-size: 18px; }
+.theme-btn:hover { color: var(--white); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); }
+.theme-btn.sel-light { color: var(--white); background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.28); }
+.theme-btn.sel-dark { color: var(--accent); background: var(--accent-dim); border-color: var(--accent-border); }
+
+/* Style chips */
+.style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.sc { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 6px; padding: 8px 6px; text-align: center; cursor: pointer; font-size: 11px; color: var(--muted); transition: all 0.15s; }
+.sc:hover { background: rgba(255,255,255,0.07); color: var(--white); }
+.sc.active { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
+.sc-icon { font-size: 15px; display: block; margin-bottom: 3px; }
+
+/* Color swatches */
+.color-row { display: flex; gap: 7px; flex-wrap: wrap; }
+.swatch { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s; }
+.swatch:hover { transform: scale(1.18); }
+.swatch.active { border-color: var(--white); box-shadow: 0 0 0 1px rgba(255,255,255,0.3); }
+
+/* Product manager */
+.product-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; max-height: 190px; overflow-y: auto; }
+.product-list::-webkit-scrollbar { width: 3px; }
+.product-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+.product-empty { font-size: 11px; color: var(--muted); text-align: center; padding: 10px 6px; border: 1px dashed var(--muted2); border-radius: var(--r); }
+.p-item { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: var(--r); padding: 7px 9px; display: flex; align-items: center; gap: 8px; transition: border-color 0.15s; }
+.p-item:hover { border-color: var(--border2); }
+.p-emoji { font-size: 18px; flex-shrink: 0; line-height: 1; }
+.p-info { flex: 1; min-width: 0; }
+.p-name { font-size: 12px; font-weight: 500; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+.p-meta { font-size: 10px; color: var(--accent); margin-top: 1px; }
+.p-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 2px 5px; border-radius: 4px; transition: color 0.15s; flex-shrink: 0; }
+.p-del:hover { color: var(--red); }
+
+/* Add product form */
+.p-form { display: flex; flex-direction: column; gap: 6px; }
+.p-form input { background: rgba(255,255,255,0.05); border: 1px solid var(--border2); border-radius: 6px; padding: 7px 10px; color: var(--white); font-family: var(--font-b); font-size: 12px; outline: none; width: 100%; transition: border-color 0.2s; }
+.p-form input::placeholder { color: var(--muted); }
+.p-form input:focus { border-color: var(--accent-border); }
+.p-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.add-btn { width: 100%; background: var(--accent-dim); border: 1px solid var(--accent-border); color: var(--accent); padding: 8px; border-radius: var(--r); font-family: var(--font-b); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; margin-top: 2px; }
+.add-btn:hover { background: rgba(200,241,53,0.18); }
+.ex-btn { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--border2); color: var(--muted); padding: 7px; border-radius: var(--r); font-family: var(--font-b); font-size: 11px; cursor: pointer; transition: all 0.15s; margin-top: 4px; }
+.ex-btn:hover { color: var(--white); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.06); }
+.p-badge { background: var(--accent); color: var(--accent-t); font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 100px; }
+
+/* Refine */
+.refine-ta { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border2); border-radius: var(--r); padding: 9px 10px; color: var(--white); font-family: var(--font-b); font-size: 12px; resize: none; outline: none; min-height: 64px; line-height: 1.5; transition: border-color 0.2s; }
+.refine-ta::placeholder { color: var(--muted); }
+.refine-ta:focus { border-color: var(--accent-border); }
+.refine-btn { margin-top: 7px; width: 100%; background: var(--accent-dim); border: 1px solid var(--accent-border); color: var(--accent); padding: 8px; border-radius: var(--r); font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-b); transition: background 0.15s; }
+.refine-btn:hover { background: rgba(200,241,53,0.18); }
+.refine-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── PREVIEW AREA ── */
+.preview-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #181819; position: relative; }
+.preview-bar { height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; background: var(--mid); border-bottom: 1px solid var(--border); }
+.vp-btns { display: flex; gap: 3px; }
+.vp-btn { background: none; border: 1px solid transparent; color: var(--muted); width: 28px; height: 28px; border-radius: 5px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.vp-btn:hover { color: var(--white); background: rgba(255,255,255,0.06); }
+.vp-btn.active { color: var(--white); background: rgba(255,255,255,0.1); border-color: var(--border2); }
+.url-bar { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 6px; padding: 4px 14px; font-size: 11px; color: var(--muted); min-width: 220px; text-align: center; max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pv-status { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.status-dot.live { background: var(--green); box-shadow: 0 0 6px rgba(74,222,128,0.5); }
+
+/* Preview frame */
+.pv-wrap { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 20px; }
+#pv-iframe { background: #fff; border-radius: 10px; border: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.07), 0 24px 64px rgba(0,0,0,0.6); transition: width 0.3s ease; }
+#pv-iframe.desktop { width: 100%; max-width: 1200px; height: 820px; }
+#pv-iframe.tablet { width: 768px; height: 820px; }
+#pv-iframe.mobile { width: 390px; height: 820px; }
+
+/* Empty state */
+.empty-state { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; }
+.es-icon { font-size: 48px; margin-bottom: 18px; opacity: 0.5; }
+.empty-state h2 { font-family: var(--font-d); font-size: 20px; font-weight: 700; color: var(--white); margin-bottom: 8px; letter-spacing: -0.02em; }
+.empty-state p { font-size: 13px; color: var(--muted); max-width: 320px; line-height: 1.6; margin-bottom: 22px; }
+.ex-pills { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
+.ex-pill { background: rgba(255,255,255,0.04); border: 1px solid var(--border2); color: var(--muted); font-size: 12px; padding: 6px 14px; border-radius: 100px; cursor: pointer; transition: all 0.15s; }
+.ex-pill:hover { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
+
+/* Loading overlay */
+.loading-overlay { display: none; position: absolute; inset: 0; background: rgba(10,10,11,0.88); backdrop-filter: blur(10px); z-index: 50; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; }
+.loading-overlay.show { display: flex; }
+.spinner { width: 44px; height: 44px; border: 3px solid rgba(200,241,53,0.15); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.75s linear infinite; margin-bottom: 18px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-title { font-family: var(--font-d); font-size: 17px; font-weight: 700; color: var(--white); margin-bottom: 5px; letter-spacing: -0.02em; }
+.loading-sub { font-size: 12px; color: var(--muted); margin-bottom: 22px; }
+.loading-steps { display: flex; flex-direction: column; gap: 8px; }
+.lstep { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 9px; transition: color 0.3s; }
+.lstep.active { color: var(--white); }
+.lstep.done { color: var(--accent); }
+.lstep .ls-icon { font-size: 13px; width: 18px; text-align: center; }
+
+/* Toast */
+.toast { position: fixed; bottom: 22px; right: 22px; background: var(--card); border: 1px solid var(--border2); border-radius: var(--r); padding: 11px 16px; font-size: 13px; color: var(--white); display: flex; align-items: center; gap: 9px; z-index: 9999; transform: translateY(70px); opacity: 0; transition: all 0.28s ease; pointer-events: none; max-width: 340px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.ok { border-color: rgba(74,222,128,0.3); }
+.toast.err { border-color: rgba(255,92,58,0.35); }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a href="dashboard.html" class="topbar-logo"><span class="logo-dot"></span>DropLaunch</a>
+  <div class="topbar-prompt">
+    <input id="prompt-input" type="text" placeholder="Describe your store — niche, brand name, target customer, vibe…" />
+    <button id="generate-btn" onclick="generateSite()">⚡ Build Store</button>
+  </div>
+  <div class="topbar-right">
+    <button class="tbtn" onclick="exportSite()">⬇ Export</button>
+    <button class="tbtn save" onclick="saveStore()">💾 Save</button>
+  </div>
+</div>
+
+<div class="app-body">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="lp-scroll">
+
+      <!-- THEME -->
+      <div class="ps">
+        <div class="ps-title">Theme</div>
+        <div class="theme-row">
+          <div class="theme-btn sel-light" id="theme-light" onclick="setTheme('light')">
+            <span class="ti">☀️</span><span>Light</span>
+          </div>
+          <div class="theme-btn" id="theme-dark" onclick="setTheme('dark')">
+            <span class="ti">🌙</span><span>Dark</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STYLE -->
+      <div class="ps">
+        <div class="ps-title">Style</div>
+        <div class="style-grid">
+          <div class="sc active" onclick="setStyle(this,'modern')"><span class="sc-icon">✦</span>Modern</div>
+          <div class="sc" onclick="setStyle(this,'bold')"><span class="sc-icon">⬛</span>Bold</div>
+          <div class="sc" onclick="setStyle(this,'minimal')"><span class="sc-icon">◻</span>Minimal</div>
+          <div class="sc" onclick="setStyle(this,'luxury')"><span class="sc-icon">♦</span>Luxury</div>
+        </div>
+      </div>
+
+      <!-- COLOR -->
+      <div class="ps">
+        <div class="ps-title">Accent Color</div>
+        <div class="color-row">
+          <div class="swatch active" style="background:#C8F135" onclick="setColor(this,'#C8F135')"></div>
+          <div class="swatch" style="background:#FF5C3A" onclick="setColor(this,'#FF5C3A')"></div>
+          <div class="swatch" style="background:#5B7FFF" onclick="setColor(this,'#5B7FFF')"></div>
+          <div class="swatch" style="background:#FF4ECD" onclick="setColor(this,'#FF4ECD')"></div>
+          <div class="swatch" style="background:#FFBE0B" onclick="setColor(this,'#FFBE0B')"></div>
+          <div class="swatch" style="background:#00E5B0" onclick="setColor(this,'#00E5B0')"></div>
+          <div class="swatch" style="background:#FF2D55" onclick="setColor(this,'#FF2D55')"></div>
+          <div class="swatch" style="background:#A855F7" onclick="setColor(this,'#A855F7')"></div>
+        </div>
+      </div>
+
+      <!-- PRODUCTS -->
+      <div class="ps">
+        <div class="ps-title">
+          Products
+          <span class="p-badge" id="p-badge">0</span>
+        </div>
+        <div class="product-list" id="product-list">
+          <div class="product-empty">No products yet — add below or load examples</div>
+        </div>
+        <div class="p-form">
+          <input type="text" id="p-name" placeholder="Product name e.g. Classic Hoodie" />
+          <div class="p-form-row">
+            <input type="text" id="p-price" placeholder="Price e.g. $49.99" />
+            <input type="text" id="p-emoji" placeholder="Emoji e.g. 👕" maxlength="4" />
+          </div>
+          <input type="text" id="p-desc" placeholder="Short description (optional)" />
+          <button class="add-btn" onclick="addProduct()">＋ Add Product</button>
+          <button class="ex-btn" onclick="loadExampleProducts()">✨ Load 4 example products</button>
+        </div>
+      </div>
+
+      <!-- REFINE -->
+      <div class="ps">
+        <div class="ps-title">Refine with AI</div>
+        <textarea class="refine-ta" id="refine-input" placeholder="Describe a change e.g. 'Make the hero section taller and add a countdown timer'"></textarea>
+        <button class="refine-btn" id="refine-btn" onclick="refineSite()">✨ Apply Refinement</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="preview-area">
+    <div class="preview-bar">
+      <div class="vp-btns">
+        <button class="vp-btn active" onclick="setViewport('desktop',this)" title="Desktop">🖥</button>
+        <button class="vp-btn" onclick="setViewport('tablet',this)" title="Tablet">📱</button>
+        <button class="vp-btn" onclick="setViewport('mobile',this)" title="Mobile">📲</button>
+      </div>
+      <div class="url-bar" id="url-bar">droplaunch.app/preview</div>
+      <div class="pv-status">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">Ready to build</span>
+      </div>
+    </div>
+    <div class="pv-wrap">
+      <div class="empty-state" id="empty-state">
+        <div class="es-icon">⚡</div>
+        <h2>Your store is 30 seconds away</h2>
+        <p>Choose a theme, add your products, describe your brand above, then hit Build Store.</p>
+        <div class="ex-pills">
+          <div class="ex-pill" onclick="fillExample(this)">Luxury candles, women 25-40, elegant</div>
+          <div class="ex-pill" onclick="fillExample(this)">Gym supplements, athletes, bold energy</div>
+          <div class="ex-pill" onclick="fillExample(this)">Pet accessories, dog owners, playful</div>
+          <div class="ex-pill" onclick="fillExample(this)">Streetwear brand VOID, Gen Z, urban</div>
+        </div>
+      </div>
+      <iframe id="pv-iframe" class="desktop" style="display:none" title="Store preview"></iframe>
+    </div>
+
+    <!-- LOADING -->
+    <div class="loading-overlay" id="loading-overlay">
+      <div class="spinner"></div>
+      <div class="loading-title">Building your store…</div>
+      <div class="loading-sub">Usually takes 15–30 seconds</div>
+      <div class="loading-steps">
+        <div class="lstep" id="ls1"><span class="ls-icon">🧠</span> Analyzing your brand…</div>
+        <div class="lstep" id="ls2"><span class="ls-icon">🎨</span> Designing layout & colors…</div>
+        <div class="lstep" id="ls3"><span class="ls-icon">✍️</span> Writing copy & descriptions…</div>
+        <div class="lstep" id="ls4"><span class="ls-icon">📦</span> Adding your products…</div>
+        <div class="lstep" id="ls5"><span class="ls-icon">✅</span> Final polish…</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+let currentHTML = ''
+let currentStoreId = null
+let isBuilt = false
+let accentColor = '#C8F135'
+let currentStyle = 'modern'
+let currentTheme = 'light'
+let products = []
+let stepTimer = null
+
+// ── THEME ──
+function setTheme(t) {
+  currentTheme = t
+  document.getElementById('theme-light').className = 'theme-btn' + (t === 'light' ? ' sel-light' : '')
+  document.getElementById('theme-dark').className = 'theme-btn' + (t === 'dark' ? ' sel-dark' : '')
+}
+
+// ── STYLE ──
+function setStyle(el, s) {
+  document.querySelectorAll('.sc').forEach(c => c.classList.remove('active'))
+  el.classList.add('active')
+  currentStyle = s
+}
+
+// ── COLOR ──
+function setColor(el, c) {
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'))
+  el.classList.add('active')
+  accentColor = c
+}
+
+// ── VIEWPORT ──
+function setViewport(mode, btn) {
+  document.querySelectorAll('.vp-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  document.getElementById('pv-iframe').className = mode
+}
+
+// ── PRODUCTS ──
+function addProduct() {
+  const name = document.getElementById('p-name').value.trim()
+  const price = document.getElementById('p-price').value.trim()
+  const emoji = document.getElementById('p-emoji').value.trim() || '📦'
+  const desc = document.getElementById('p-desc').value.trim()
+  if (!name) { showToast('⚠️ Please enter a product name', 'err'); return }
+  if (!price) { showToast('⚠️ Please enter a price', 'err'); return }
+  products.push({ name, price, emoji, desc })
+  ;['p-name','p-price','p-emoji','p-desc'].forEach(id => document.getElementById(id).value = '')
+  document.getElementById('p-name').focus()
+  renderProducts()
+  showToast(`✅ "${name}" added`, 'ok')
+}
+
+function removeProduct(i) {
+  const name = products[i].name
+  products.splice(i, 1)
+  renderProducts()
+  showToast(`🗑 "${name}" removed`, 'ok')
+}
+
+function loadExampleProducts() {
+  products = [
+    { name: 'Classic Essential Hoodie', price: '$59.99', emoji: '👕', desc: 'Premium heavyweight cotton, relaxed oversized fit' },
+    { name: 'Cargo Utility Pants', price: '$79.99', emoji: '👖', desc: 'Multi-pocket tactical design, relaxed street fit' },
+    { name: 'Logo Graphic Tee', price: '$34.99', emoji: '🎽', desc: 'Soft 100% cotton, bold front print' },
+    { name: 'Snapback Cap', price: '$29.99', emoji: '🧢', desc: 'Embroidered logo, adjustable snap closure' },
+  ]
+  renderProducts()
+  showToast('✨ 4 example products loaded!', 'ok')
+}
+
+function renderProducts() {
+  const list = document.getElementById('product-list')
+  document.getElementById('p-badge').textContent = products.length
+  if (!products.length) {
+    list.innerHTML = '<div class="product-empty">No products yet — add below or load examples</div>'
+    return
+  }
+  list.innerHTML = products.map((p, i) => `
+    <div class="p-item">
+      <span class="p-emoji">${p.emoji}</span>
+      <div class="p-info">
+        <div class="p-name">${escHtml(p.name)}</div>
+        <div class="p-meta">${escHtml(p.price)}${p.desc ? ' · ' + escHtml(p.desc.substring(0,28)) + (p.desc.length > 28 ? '…' : '') : ''}</div>
+      </div>
+      <button class="p-del" onclick="removeProduct(${i})" title="Remove">✕</button>
+    </div>`).join('')
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+function getProductsString() {
+  if (!products.length) return ''
+  return '\n\nProducts to feature (use EXACTLY these):\n' +
+    products.map(p => `- ${p.emoji} ${p.name} — ${p.price}${p.desc ? ': ' + p.desc : ''}`).join('\n')
+}
+
+// ── EXAMPLES ──
+function fillExample(el) {
+  document.getElementById('prompt-input').value = el.textContent.trim()
+  document.getElementById('prompt-input').focus()
+}
+
+// ── GENERATE ──
+async function generateSite() {
+  const description = document.getElementById('prompt-input').value.trim()
+  if (!description) { showToast('⚠️ Describe your store first', 'err'); return }
+
+  const btn = document.getElementById('generate-btn')
+  btn.disabled = true
+  btn.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite"></span> Building…'
+
+  showLoading(true)
+  startStepAnimation()
+
+  const themeInstruction = currentTheme === 'dark'
+    ? 'Use a DARK theme: backgrounds must be black or very dark (#0a0a0a, #111111, #1a1a1a). Text must be light (#e0e0e0, #ffffff, #f0f0f0).'
+    : 'Use a LIGHT theme: backgrounds must be white or very light (#ffffff, #f8f9fa, #f0f0f0). Text must be dark (#111111, #1a1a1a, #333333).'
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'build',
+        prompt: {
+          description: description + getProductsString(),
+          style: currentStyle,
+          color: accentColor,
+          theme: themeInstruction,
+          products: products
+        }
+      })
+    })
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'API error ' + res.status) }
+    const data = await res.json()
+    if (!data.result) throw new Error('Empty response from API')
+    const html = cleanHTML(data.result)
+    if (!html.includes('<!DOCTYPE') && !html.includes('<html')) throw new Error('Invalid HTML returned')
+    currentHTML = html
+    isBuilt = true
+    renderPreview(html)
+    setStatus('live', '✓ Store ready')
+    showToast('✅ Store built! Hit 💾 Save to keep it.', 'ok')
+    document.getElementById('url-bar').textContent = 'droplaunch.app/store/' + slugify(description)
+  } catch(err) {
+    setStatus('', 'Error — try again')
+    showToast('❌ ' + (err.message || 'Build failed — try again'), 'err')
+  } finally {
+    showLoading(false)
+    btn.disabled = false
+    btn.innerHTML = '⚡ Rebuild'
+  }
+}
+
+// ── REFINE ──
+async function refineSite() {
+  if (!isBuilt) { showToast('⚠️ Build a store first', 'err'); return }
+  const instruction = document.getElementById('refine-input').value.trim()
+  if (!instruction) { showToast('⚠️ Describe what to change', 'err'); return }
+  const btn = document.getElementById('refine-btn')
+  btn.disabled = true; btn.textContent = '⏳ Refining…'
+  showLoading(true)
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'refine', html: currentHTML, instruction })
+    })
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Refine failed') }
+    const data = await res.json()
+    const html = cleanHTML(data.result)
+    currentHTML = html
+    renderPreview(html)
+    document.getElementById('refine-input').value = ''
+    showToast('✨ Store updated!', 'ok')
+  } catch(e) {
+    showToast('❌ Refinement failed: ' + e.message, 'err')
+  } finally {
+    showLoading(false)
+    btn.disabled = false; btn.textContent = '✨ Apply Refinement'
+  }
+}
+
+// ── SAVE TO SUPABASE ──
+async function saveStore() {
+  if (!currentHTML) { showToast('⚠️ Build a store first', 'err'); return }
+  if (!currentUser) { showToast('⚠️ Please sign in first', 'err'); return }
+  const description = document.getElementById('prompt-input').value.trim()
+  const storeName = description.substring(0, 40) || 'My Store'
+  try {
+    if (currentStoreId) {
+      const { error } = await _supabase.from('stores').update({
+        name: storeName, html_content: currentHTML, updated_at: new Date().toISOString()
+      }).eq('id', currentStoreId)
+      if (error) throw error
+    } else {
+      const { data, error } = await _supabase.from('stores').insert({
+        user_id: currentUser.id, name: storeName, html_content: currentHTML,
+        status: 'draft', description
+      }).select().single()
+      if (error) throw error
+      currentStoreId = data.id
+    }
+    showToast('💾 Saved to your dashboard!', 'ok')
+  } catch(e) {
+    showToast('❌ Save failed: ' + e.message, 'err')
+  }
+}
+
+// ── EXPORT ──
+function exportSite() {
+  if (!currentHTML) { showToast('⚠️ Build a store first', 'err'); return }
+  const blob = new Blob([currentHTML], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = slugify(document.getElementById('prompt-input').value || 'my-store') + '.html'; a.click()
+  URL.revokeObjectURL(url)
+  showToast('⬇ Downloaded as HTML file', 'ok')
+}
+
+// ── RENDER PREVIEW ──
+function renderPreview(html) {
+  document.getElementById('empty-state').style.display = 'none'
+  const iframe = document.getElementById('pv-iframe')
+  iframe.style.display = 'block'
+  const blob = new Blob([html], { type: 'text/html; charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  iframe.src = url
+  setTimeout(() => URL.revokeObjectURL(url), 8000)
+}
+
+// ── LOADING ANIMATION ──
+function showLoading(show) {
+  document.getElementById('loading-overlay').classList.toggle('show', show)
+  if (!show) {
+    clearTimeout(stepTimer)
+    ;['ls1','ls2','ls3','ls4','ls5'].forEach(id => {
+      const el = document.getElementById(id)
+      if (el) el.classList.remove('active','done')
+    })
+  }
+}
+
+function startStepAnimation() {
+  const steps = ['ls1','ls2','ls3','ls4','ls5']
+  let i = 0
+  function next() {
+    if (i > 0 && document.getElementById(steps[i-1])) {
+      document.getElementById(steps[i-1]).classList.remove('active')
+      document.getElementById(steps[i-1]).classList.add('done')
+    }
+    if (i < steps.length) {
+      document.getElementById(steps[i])?.classList.add('active')
+      i++
+      stepTimer = setTimeout(next, 4500)
+    }
+  }
+  next()
+}
+
+// ── HELPERS ──
+function cleanHTML(text) {
+  return text
+    .replace(/^```html\n?/i, '')
+    .replace(/^```\n?/, '')
+    .replace(/\n?```$/, '')
+    .trim()
+}
+
+function slugify(str) {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,40) || 'store'
+}
+
+function setStatus(type, text) {
+  document.getElementById('status-dot').className = 'status-dot' + (type === 'live' ? ' live' : '')
+  document.getElementById('status-text').textContent = text
+}
+
+function showToast(msg, type = 'ok') {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.className = `toast show ${type}`
+  clearTimeout(t._to)
+  t._to = setTimeout(() => t.classList.remove('show'), 3800)
+}
+
+// ── KEYBOARD SHORTCUTS ──
+document.getElementById('prompt-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) generateSite()
+})
+document.getElementById('p-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addProduct()
+})
+document.getElementById('p-price').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addProduct()
+})
+</script>
+</body>
+</html>
