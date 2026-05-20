@@ -285,8 +285,10 @@ function renderPreview(html) {
   document.getElementById('empty-state').style.display = 'none'
   const iframe = document.getElementById('preview-iframe')
   iframe.style.display = 'block'
-  const doc = iframe.contentDocument || iframe.contentWindow.document
-  doc.open(); doc.write(html); doc.close()
+  const blob = new Blob([html], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  iframe.src = url
+  setTimeout(() => URL.revokeObjectURL(url), 5000)
 }
 
 // ── CALL /api/generate ──
