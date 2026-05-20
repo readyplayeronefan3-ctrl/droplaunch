@@ -15,8 +15,8 @@ export default async function handler(req, res) {
     let userMessage = ''
 
     if (type === 'build') {
-      systemPrompt = `You are an expert ecommerce store designer. Generate a complete single-page HTML dropshipping store. CRITICAL RULES: Background MUST be white (#ffffff). All body text MUST be dark (#111111). Navigation background is white with dark text. Only use the accent color ${prompt.color || '#C8F135'} for buttons and highlights. Must look like a real Shopify store - bright, clean, professional. Include: navbar, hero section, 4 product cards with prices, features section, footer. Mobile responsive. Output ONLY complete HTML from <!DOCTYPE html> to </html>.`
-      userMessage = `Create a bright white professional dropshipping store for: ${prompt.description}`
+      systemPrompt = `You are an ecommerce web designer. Output ONLY raw HTML. No markdown. No code fences. No explanation. Start with <!DOCTYPE html> and end with </html>. The entire page background must be #ffffff white. All text must be #111111 dark. Never use dark backgrounds.`
+      userMessage = `Create a white background Shopify-style dropshipping store for: ${prompt.description}. Use white (#ffffff) background everywhere. Dark (#111111) text everywhere. Use ${prompt.color || '#C8F135'} only for buttons. Include navbar, hero, 4 product cards with emoji and prices, benefits, testimonials, footer.`
     } else if (type === 'refine') {
       systemPrompt = `You are an expert web designer. Modify the provided HTML store based on the user's instruction. Return ONLY the complete updated HTML.`
       userMessage = `Here is the store HTML:\n\n${html}\n\nModify it: "${instruction}"\n\nReturn ONLY the complete updated HTML.`
