@@ -1,4 +1,3 @@
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -7,17 +6,15 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  // DEBUG - check if env var is being received
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) return res.status(500).json({ error: 'API key not found in environment' })
 
   try {
     const { type, prompt, html, instruction, topic } = req.body
-
     let systemPrompt = ''
     let userMessage = ''
 
-  if (type === 'build') {
+    if (type === 'build') {
       systemPrompt = `You are an expert ecommerce store designer. Generate a complete single-page HTML dropshipping store. CRITICAL RULES: Background MUST be white (#ffffff). All body text MUST be dark (#111111). Navigation background is white with dark text. Only use the accent color ${prompt.color || '#C8F135'} for buttons and highlights. Must look like a real Shopify store - bright, clean, professional. Include: navbar, hero section, 4 product cards with prices, features section, footer. Mobile responsive. Output ONLY complete HTML from <!DOCTYPE html> to </html>.`
       userMessage = `Create a bright white professional dropshipping store for: ${prompt.description}`
     } else if (type === 'refine') {
@@ -38,8 +35,8 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-       model: 'claude-haiku-4-5-20251001',
-        max_tokens: 4000,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 8000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }]
       })
@@ -47,12 +44,13 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const err = await response.json()
-      return res.status(response.status).json({ error: err.error?.message || 'API error', key_prefix: apiKey.substring(0, 10) })
+      return res.status(response.status).json({ error: err.error?.message || 'API error' })
     }
 
-const text = data.content.map(c => c.text || '').join('')
-const cleaned = text.replace(/^```html\n?/, '').replace(/^```\n?/, '').replace(/\n?```$/, '').trim()
-return res.status(200).json({ result: cleaned })
+    const data = await response.json()
+    const text = data.content.map(c => c.text || '').join('')
+    const cleaned = text.replace(/^```html\n?/, '').replace(/^```\n?/, '').replace(/\n?```$/, '').trim()
+    return res.status(200).json({ result: cleaned })
 
   } catch (err) {
     return res.status(500).json({ error: err.message || 'Server error' })
