@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DropLaunch — Store Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- GrapesJS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.21.7/css/grapes.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.21.7/grapes.min.js"></script>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const _supabase = supabase.createClient(
+  'https://zjsvctzkavpehosjqsgj.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpqc3ZjdHprYXZwZWhvc2pxc2dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDQwMzAsImV4cCI6MjA5NDYyMDAzMH0.4FhKatrf-2lvMF5H5jS3wmXz7K3oL3nciiekCOm7WXs'
+)
+let currentUser = null
+let currentStoreId = null
+let editor = null
+
+async function initBuilder() {
+  const { data: { session } } = await _supabase.auth.getSession()
+  if (!session) { window.location = 'login.html'; return }
+  currentUser = session.user
+  // Check if editing existing store
+  const params = new URLSearchParams(window.location.search)
+  const storeId = params.get('id')
+  if (storeId) loadExistingStore(storeId)
+}
+
+async function loadExistingStore(id) {
+  const { data: store } = await _supabase.from('stores').select('*').eq('id', id).single()
+  if (store && store.html_content) {
+    currentStoreId = id
+    document.getElementById('prompt-input').value = store.description || store.name || ''
+    document.getElementById('sb-store-name').textContent = store.name || 'Untitled Store'
+    loadHTMLIntoEditor(store.html_content)
+    setStatus('live', '✓ Store loaded')
+    showToast('✏️ Store loaded — edit away!', 'ok')
+  }
+}
+
+window.addEventListener('DOMContentLoaded', initBuilder)
+</script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0A0A0B; --mid: #141416; --card: #111113;
+  --white: #F5F5F2; --muted: #666662; --muted2: #333330;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+  --accent: #C8F135; --accent-t: #0A0A0B;
+  --accent-dim: rgba(200,241,53,0.1); --accent-border: rgba(200,241,53,0.22);
+  --green: #4ade80; --red: #FF5C3A;
+  --font-d: 'Syne', sans-serif; --font-b: 'DM Sans', sans-serif; --r: 8px;
+}
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--white); font-family: var(--font-b); font-size: 14px; display: flex; flex-direction: column; }
+
+/* ── TOPBAR ── */
+.topbar { height: 52px; flex-shrink: 0; display: flex; align-items: center; padding: 0 14px; background: var(--mid); border-bottom: 1px solid var(--border); gap: 10px; z-index: 200; }
+.topbar-logo { font-family: var(--font-d); font-size: 16px; font-weight: 800; letter-spacing: -0.03em; display: flex; align-items: center; gap: 7px; text-decoration: none; color: var(--white); white-space: nowrap; flex-shrink: 0; }
+.logo-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 6px rgba(200,241,53,0.5); }
+.topbar-prompt { flex: 1; display: flex; gap: 8px; align-items: center; min-width: 0; }
+#prompt-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border2); border-radius: var(--r); padding: 8px 13px; color: var(--white); font-family: var(--font-b); font-size: 13px; outline: none; transition: border-color 0.2s; min-width: 0; }
+#prompt-input::placeholder { color: var(--muted); }
+#prompt-input:focus { border-color: var(--accent-border); background: rgba(200,241,53,0.03); }
+#ai-btn { background: var(--accent); color: var(--accent-t); border: none; padding: 8px 16px; border-radius: var(--r); font-family: var(--font-b); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px; transition: all 0.2s; flex-shrink: 0; }
+#ai-btn:hover:not(:disabled) { opacity: 0.87; transform: translateY(-1px); }
+#ai-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.tb-right { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.tbtn { background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--white); padding: 7px 12px; border-radius: var(--r); font-family: var(--font-b); font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+.tbtn:hover { background: rgba(255,255,255,0.1); }
+.tbtn.green { background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.25); color: var(--green); }
+.tbtn.green:hover { background: rgba(74,222,128,0.2); }
+.tbtn.save { background: var(--accent); color: var(--accent-t); border-color: transparent; font-weight: 600; }
+.tbtn.save:hover { opacity: 0.87; }
+.tb-divider { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; }
+.tb-store-name { font-size: 12px; color: var(--muted); max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#sb-store-name { color: var(--white); }
+.pv-status { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.status-dot.live { background: var(--green); box-shadow: 0 0 6px rgba(74,222,128,0.5); }
+
+/* ── MAIN AREA ── */
+.app-body { flex: 1; display: flex; overflow: hidden; position: relative; }
+
+/* ── LEFT PANEL ── */
+.left-panel { width: 240px; min-width: 240px; background: var(--mid); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; z-index: 10; }
+.lp-scroll { overflow-y: auto; flex: 1; }
+.lp-scroll::-webkit-scrollbar { width: 3px; }
+.lp-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.ps { padding: 12px 13px; border-bottom: 1px solid var(--border); }
+.ps-title { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 9px; display: flex; align-items: center; justify-content: space-between; }
+
+/* Theme */
+.theme-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.theme-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 9px 6px; border-radius: var(--r); border: 1px solid var(--border2); cursor: pointer; font-family: var(--font-b); font-size: 11px; font-weight: 500; color: var(--muted); background: rgba(255,255,255,0.02); transition: all 0.2s; }
+.theme-btn .ti { font-size: 17px; }
+.theme-btn:hover { color: var(--white); border-color: rgba(255,255,255,0.2); }
+.theme-btn.sel-light { color: var(--white); background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.28); }
+.theme-btn.sel-dark { color: var(--accent); background: var(--accent-dim); border-color: var(--accent-border); }
+
+/* Style chips */
+.style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.sc { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 6px; padding: 7px 5px; text-align: center; cursor: pointer; font-size: 11px; color: var(--muted); transition: all 0.15s; }
+.sc:hover { background: rgba(255,255,255,0.07); color: var(--white); }
+.sc.active { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
+.sc-icon { font-size: 14px; display: block; margin-bottom: 2px; }
+
+/* Colors */
+.color-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.swatch { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s, border-color 0.15s; }
+.swatch:hover { transform: scale(1.2); }
+.swatch.active { border-color: var(--white); }
+
+/* Products */
+.product-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 9px; max-height: 180px; overflow-y: auto; }
+.product-list::-webkit-scrollbar { width: 3px; }
+.product-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+.product-empty { font-size: 11px; color: var(--muted); text-align: center; padding: 9px 6px; border: 1px dashed var(--muted2); border-radius: var(--r); }
+.p-item { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: var(--r); padding: 6px 8px; display: flex; align-items: center; gap: 7px; }
+.p-emoji { font-size: 16px; flex-shrink: 0; }
+.p-info { flex: 1; min-width: 0; }
+.p-name { font-size: 11px; font-weight: 500; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-meta { font-size: 10px; color: var(--accent); }
+.p-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 1px 4px; border-radius: 3px; flex-shrink: 0; }
+.p-del:hover { color: var(--red); }
+.p-form { display: flex; flex-direction: column; gap: 5px; }
+.p-form input { background: rgba(255,255,255,0.05); border: 1px solid var(--border2); border-radius: 6px; padding: 6px 9px; color: var(--white); font-family: var(--font-b); font-size: 12px; outline: none; width: 100%; }
+.p-form input::placeholder { color: var(--muted); }
+.p-form input:focus { border-color: var(--accent-border); }
+.p-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.add-btn { width: 100%; background: var(--accent-dim); border: 1px solid var(--accent-border); color: var(--accent); padding: 7px; border-radius: var(--r); font-family: var(--font-b); font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.add-btn:hover { background: rgba(200,241,53,0.18); }
+.ex-btn { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--border2); color: var(--muted); padding: 6px; border-radius: var(--r); font-family: var(--font-b); font-size: 11px; cursor: pointer; transition: all 0.15s; margin-top: 4px; }
+.ex-btn:hover { color: var(--white); border-color: rgba(255,255,255,0.2); }
+.p-badge { background: var(--accent); color: var(--accent-t); font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 100px; }
+
+/* Refine */
+.refine-ta { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border2); border-radius: var(--r); padding: 8px 10px; color: var(--white); font-family: var(--font-b); font-size: 12px; resize: none; outline: none; min-height: 60px; line-height: 1.5; }
+.refine-ta::placeholder { color: var(--muted); }
+.refine-ta:focus { border-color: var(--accent-border); }
+.refine-btn { margin-top: 6px; width: 100%; background: var(--accent-dim); border: 1px solid var(--accent-border); color: var(--accent); padding: 7px; border-radius: var(--r); font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-b); transition: background 0.15s; }
+.refine-btn:hover { background: rgba(200,241,53,0.18); }
+.refine-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── EDITOR AREA ── */
+.editor-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+/* GrapesJS overrides */
+#gjs { flex: 1; overflow: hidden; }
+.gjs-cv-canvas { background: #1a1a1c !important; }
+.gjs-frame-wrapper { padding: 20px !important; }
+.gjs-cv-canvas__frames { border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 1px rgba(255,255,255,0.07), 0 20px 60px rgba(0,0,0,0.5); }
+.gjs-one-bg { background-color: var(--mid) !important; }
+.gjs-two-color { color: var(--white) !important; }
+.gjs-three-bg { background-color: var(--card) !important; }
+.gjs-four-color, .gjs-four-color-h:hover { color: var(--accent) !important; }
+.gjs-pn-panel { background: var(--mid) !important; border-color: var(--border) !important; }
+.gjs-pn-views-container { background: var(--mid) !important; border-color: var(--border) !important; }
+.gjs-block { background: rgba(255,255,255,0.04) !important; border-color: var(--border) !important; color: var(--white) !important; }
+.gjs-block:hover { background: rgba(200,241,53,0.08) !important; border-color: var(--accent-border) !important; }
+.gjs-block__label { color: var(--muted) !important; font-family: var(--font-b) !important; font-size: 10px !important; }
+.gjs-pn-btn { color: var(--muted) !important; }
+.gjs-pn-btn:hover, .gjs-pn-btn.gjs-pn-active { color: var(--accent) !important; }
+.gjs-toolbar { background: var(--mid) !important; border-color: var(--border) !important; }
+.gjs-toolbar-item { color: var(--white) !important; }
+.gjs-rte-toolbar { background: var(--mid) !important; border-color: var(--border) !important; }
+.gjs-com-badge { background: var(--accent) !important; color: var(--accent-t) !important; }
+.gjs-selected { outline-color: var(--accent) !important; }
+
+/* Empty state */
+.editor-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; pointer-events: none; z-index: 5; transition: opacity 0.3s; }
+.editor-empty.hidden { opacity: 0; }
+.ee-icon { font-size: 44px; margin-bottom: 14px; opacity: 0.45; }
+.editor-empty h2 { font-family: var(--font-d); font-size: 18px; font-weight: 700; color: var(--white); margin-bottom: 7px; letter-spacing: -0.02em; }
+.editor-empty p { font-size: 13px; color: var(--muted); max-width: 300px; line-height: 1.6; margin-bottom: 18px; }
+.ex-pills { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; pointer-events: all; }
+.ex-pill { background: rgba(255,255,255,0.04); border: 1px solid var(--border2); color: var(--muted); font-size: 11px; padding: 5px 12px; border-radius: 100px; cursor: pointer; transition: all 0.15s; }
+.ex-pill:hover { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
+
+/* Loading overlay */
+.loading-overlay { display: none; position: absolute; inset: 0; background: rgba(10,10,11,0.9); backdrop-filter: blur(12px); z-index: 100; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; }
+.loading-overlay.show { display: flex; }
+.spinner { width: 42px; height: 42px; border: 3px solid rgba(200,241,53,0.15); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.75s linear infinite; margin-bottom: 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-title { font-family: var(--font-d); font-size: 16px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+.loading-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+.loading-steps { display: flex; flex-direction: column; gap: 7px; }
+.lstep { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; transition: color 0.3s; }
+.lstep.active { color: var(--white); }
+.lstep.done { color: var(--accent); }
+
+/* Toast */
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--card); border: 1px solid var(--border2); border-radius: var(--r); padding: 10px 15px; font-size: 13px; color: var(--white); z-index: 9999; transform: translateY(60px); opacity: 0; transition: all 0.25s ease; pointer-events: none; max-width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.ok { border-color: rgba(74,222,128,0.3); }
+.toast.err { border-color: rgba(255,92,58,0.35); }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a href="dashboard.html" class="topbar-logo"><span class="logo-dot"></span>DropLaunch</a>
+  <div class="topbar-prompt">
+    <input id="prompt-input" type="text" placeholder="Describe your store — niche, brand, target customer…" />
+    <button id="ai-btn" onclick="generateWithAI()">⚡ Generate with AI</button>
+  </div>
+  <div class="tb-right">
+    <div class="pv-status"><div class="status-dot" id="status-dot"></div><span id="status-text">Ready</span></div>
+    <div class="tb-divider"></div>
+    <span class="tb-store-name"><span id="sb-store-name">New Store</span></span>
+    <div class="tb-divider"></div>
+    <button class="tbtn" onclick="exportHTML()">⬇ Export</button>
+    <button class="tbtn green" onclick="viewStore()" id="view-btn" style="display:none">👁 View Store</button>
+    <button class="tbtn save" onclick="saveStore()">💾 Save</button>
+  </div>
+</div>
+
+<div class="app-body">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="lp-scroll">
+
+      <!-- THEME -->
+      <div class="ps">
+        <div class="ps-title">Theme</div>
+        <div class="theme-row">
+          <div class="theme-btn sel-light" id="theme-light" onclick="setTheme('light')">
+            <span class="ti">☀️</span><span>Light</span>
+          </div>
+          <div class="theme-btn" id="theme-dark" onclick="setTheme('dark')">
+            <span class="ti">🌙</span><span>Dark</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STYLE -->
+      <div class="ps">
+        <div class="ps-title">Style</div>
+        <div class="style-grid">
+          <div class="sc active" onclick="setStyle(this,'modern')"><span class="sc-icon">✦</span>Modern</div>
+          <div class="sc" onclick="setStyle(this,'bold')"><span class="sc-icon">⬛</span>Bold</div>
+          <div class="sc" onclick="setStyle(this,'minimal')"><span class="sc-icon">◻</span>Minimal</div>
+          <div class="sc" onclick="setStyle(this,'luxury')"><span class="sc-icon">♦</span>Luxury</div>
+        </div>
+      </div>
+
+      <!-- COLOR -->
+      <div class="ps">
+        <div class="ps-title">Accent Color</div>
+        <div class="color-row">
+          <div class="swatch active" style="background:#C8F135" onclick="setColor(this,'#C8F135')"></div>
+          <div class="swatch" style="background:#FF5C3A" onclick="setColor(this,'#FF5C3A')"></div>
+          <div class="swatch" style="background:#5B7FFF" onclick="setColor(this,'#5B7FFF')"></div>
+          <div class="swatch" style="background:#FF4ECD" onclick="setColor(this,'#FF4ECD')"></div>
+          <div class="swatch" style="background:#FFBE0B" onclick="setColor(this,'#FFBE0B')"></div>
+          <div class="swatch" style="background:#00E5B0" onclick="setColor(this,'#00E5B0')"></div>
+          <div class="swatch" style="background:#FF2D55" onclick="setColor(this,'#FF2D55')"></div>
+          <div class="swatch" style="background:#A855F7" onclick="setColor(this,'#A855F7')"></div>
+        </div>
+      </div>
+
+      <!-- PRODUCTS -->
+      <div class="ps">
+        <div class="ps-title">Products <span class="p-badge" id="p-badge">0</span></div>
+        <div class="product-list" id="product-list">
+          <div class="product-empty">No products — add below or load examples</div>
+        </div>
+        <div class="p-form">
+          <input type="text" id="p-name" placeholder="Product name e.g. Classic Hoodie" />
+          <div class="p-form-row">
+            <input type="text" id="p-price" placeholder="Price e.g. $49.99" />
+            <input type="text" id="p-emoji" placeholder="Emoji 👕" maxlength="4" />
+          </div>
+          <input type="text" id="p-desc" placeholder="Short description (optional)" />
+          <button class="add-btn" onclick="addProduct()">＋ Add Product</button>
+          <button class="ex-btn" onclick="loadExampleProducts()">✨ Load 4 example products</button>
+        </div>
+      </div>
+
+      <!-- REFINE -->
+      <div class="ps">
+        <div class="ps-title">Refine with AI</div>
+        <textarea class="refine-ta" id="refine-input" placeholder="e.g. 'Make the hero bigger, add a sale banner at the top'"></textarea>
+        <button class="refine-btn" id="refine-btn" onclick="refineWithAI()">✨ Apply Refinement</button>
+      </div>
+
+      <!-- GRAPES INFO -->
+      <div class="ps">
+        <div class="ps-title">Drag & Drop Editor</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.6">
+          Click any element in the preview to select and edit it.<br><br>
+          Use the <strong style="color:var(--white)">Blocks</strong> panel on the right to drag in new sections.<br><br>
+          Double-click any text to edit it directly.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- EDITOR AREA -->
+  <div class="editor-area">
+    <!-- GrapesJS mounts here -->
+    <div id="gjs"></div>
+
+    <!-- Empty state shown before first build -->
+    <div class="editor-empty" id="editor-empty">
+      <div class="ee-icon">⚡</div>
+      <h2>Generate your store with AI</h2>
+      <p>Describe your brand above and hit Generate, or click an example to get started.</p>
+      <div class="ex-pills">
+        <div class="ex-pill" onclick="fillExample(this)">Luxury candles, women 25-40, elegant</div>
+        <div class="ex-pill" onclick="fillExample(this)">Gym supplements, athletes, bold energy</div>
+        <div class="ex-pill" onclick="fillExample(this)">Pet accessories, dog owners, playful</div>
+        <div class="ex-pill" onclick="fillExample(this)">Streetwear brand VOID, Gen Z, urban</div>
+      </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+      <div class="spinner"></div>
+      <div class="loading-title">Building your store…</div>
+      <div class="loading-sub">Usually 15–30 seconds</div>
+      <div class="loading-steps">
+        <div class="lstep" id="ls1"><span>🧠</span> Analyzing your brand…</div>
+        <div class="lstep" id="ls2"><span>🎨</span> Designing layout…</div>
+        <div class="lstep" id="ls3"><span>✍️</span> Writing copy…</div>
+        <div class="lstep" id="ls4"><span>📦</span> Adding products…</div>
+        <div class="lstep" id="ls5"><span>✅</span> Final polish…</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+let accentColor = '#C8F135'
+let currentStyle = 'modern'
+let currentTheme = 'light'
+let products = []
+let stepTimer = null
+let isBuilt = false
+
+// ── INIT GRAPES ──
+window.addEventListener('DOMContentLoaded', () => {
+  editor = grapesjs.init({
+    container: '#gjs',
+    height: '100%',
+    storageManager: false,
+    canvas: {
+      styles: ['https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap']
+    },
+    deviceManager: {
+      devices: [
+        { name: 'Desktop', width: '' },
+        { name: 'Tablet', width: '768px' },
+        { name: 'Mobile', width: '390px' }
+      ]
+    },
+    panels: {
+      defaults: [
+        {
+          id: 'panel-top',
+          el: '.topbar',
+          buttons: []
+        },
+        {
+          id: 'views',
+          buttons: [
+            { id: 'open-blocks', className: 'fa fa-th-large', command: 'open-blocks', active: true, togglable: false },
+            { id: 'open-sm', className: 'fa fa-paint-brush', command: 'open-sm', togglable: false },
+            { id: 'open-layers', className: 'fa fa-bars', command: 'open-layers', togglable: false },
+          ]
+        }
+      ]
+    },
+    blockManager: {
+      appendTo: '#gjs',
+      blocks: []
+    }
+  })
+
+  // Hide empty state when user starts editing
+  editor.on('component:add', () => {
+    if (isBuilt) document.getElementById('editor-empty').classList.add('hidden')
+  })
+})
+
+// ── LOAD HTML INTO GRAPES ──
+function loadHTMLIntoEditor(html) {
+  if (!editor) return
+  // Extract body and styles
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
+  const bodyHTML = bodyMatch ? bodyMatch[1].trim() : html.trim()
+  const styleMatches = []
+  const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi
+  let m
+  while ((m = styleRegex.exec(html)) !== null) styleMatches.push(m[1].trim())
+  const css = styleMatches.join('\n')
+  editor.setComponents(bodyHTML)
+  if (css) editor.setStyle(css)
+  document.getElementById('editor-empty').classList.add('hidden')
+  isBuilt = true
+}
+
+// ── GET HTML FROM GRAPES ──
+function getHTMLFromEditor() {
+  if (!editor) return ''
+  const html = editor.getHtml()
+  const css = editor.getCss()
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Store</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>${css}</style>
+</head>
+<body>${html}</body>
+</html>`
+}
+
+// ── THEME ──
+function setTheme(t) {
+  currentTheme = t
+  document.getElementById('theme-light').className = 'theme-btn' + (t === 'light' ? ' sel-light' : '')
+  document.getElementById('theme-dark').className = 'theme-btn' + (t === 'dark' ? ' sel-dark' : '')
+}
+
+// ── STYLE ──
+function setStyle(el, s) {
+  document.querySelectorAll('.sc').forEach(c => c.classList.remove('active'))
+  el.classList.add('active'); currentStyle = s
+}
+
+// ── COLOR ──
+function setColor(el, c) {
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'))
+  el.classList.add('active'); accentColor = c
+}
+
+// ── PRODUCTS ──
+function addProduct() {
+  const name = document.getElementById('p-name').value.trim()
+  const price = document.getElementById('p-price').value.trim()
+  const emoji = document.getElementById('p-emoji').value.trim() || '📦'
+  const desc = document.getElementById('p-desc').value.trim()
+  if (!name) { showToast('⚠️ Enter a product name', 'err'); return }
+  if (!price) { showToast('⚠️ Enter a price', 'err'); return }
+  products.push({ name, price, emoji, desc })
+  ;['p-name','p-price','p-emoji','p-desc'].forEach(id => document.getElementById(id).value = '')
+  document.getElementById('p-name').focus()
+  renderProducts()
+  showToast(`✅ "${name}" added`, 'ok')
+}
+
+function removeProduct(i) {
+  const name = products[i].name
+  products.splice(i, 1); renderProducts()
+  showToast(`🗑 "${name}" removed`, 'ok')
+}
+
+function loadExampleProducts() {
+  products = [
+    { name: 'Classic Essential Hoodie', price: '$59.99', emoji: '👕', desc: 'Premium heavyweight cotton, relaxed fit' },
+    { name: 'Cargo Utility Pants', price: '$79.99', emoji: '👖', desc: 'Multi-pocket tactical design' },
+    { name: 'Logo Graphic Tee', price: '$34.99', emoji: '🎽', desc: 'Soft 100% cotton, bold print' },
+    { name: 'Snapback Cap', price: '$29.99', emoji: '🧢', desc: 'Embroidered logo, adjustable strap' },
+  ]
+  renderProducts(); showToast('✨ Example products loaded!', 'ok')
+}
+
+function renderProducts() {
+  const list = document.getElementById('product-list')
+  document.getElementById('p-badge').textContent = products.length
+  if (!products.length) { list.innerHTML = '<div class="product-empty">No products — add below or load examples</div>'; return }
+  list.innerHTML = products.map((p, i) => `
+    <div class="p-item">
+      <span class="p-emoji">${p.emoji}</span>
+      <div class="p-info">
+        <div class="p-name">${esc(p.name)}</div>
+        <div class="p-meta">${esc(p.price)}</div>
+      </div>
+      <button class="p-del" onclick="removeProduct(${i})">✕</button>
+    </div>`).join('')
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+
+function getProductsString() {
+  if (!products.length) return ''
+  return '\n\nProducts to feature (use EXACTLY these):\n' +
+    products.map(p => `- ${p.emoji} ${p.name} — ${p.price}${p.desc ? ': ' + p.desc : ''}`).join('\n')
+}
+
+function fillExample(el) {
+  document.getElementById('prompt-input').value = el.textContent.trim()
+  document.getElementById('prompt-input').focus()
+}
+
+// ── AI GENERATE ──
+async function generateWithAI() {
+  const description = document.getElementById('prompt-input').value.trim()
+  if (!description) { showToast('⚠️ Describe your store first', 'err'); return }
+  const btn = document.getElementById('ai-btn')
+  btn.disabled = true
+  btn.innerHTML = '<span style="display:inline-block;width:11px;height:11px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite"></span> Building…'
+  showLoading(true); startSteps()
+  const themeInstruction = currentTheme === 'dark'
+    ? 'DARK theme: backgrounds must be black/dark (#0a0a0a, #111111, #1a1a1a). Text must be light (#e0e0e0, #ffffff).'
+    : 'LIGHT theme: backgrounds must be white/light (#ffffff, #f8f9fa). Text must be dark (#111111, #333333).'
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'build',
+        prompt: { description: description + getProductsString(), style: currentStyle, color: accentColor, theme: themeInstruction, products }
+      })
+    })
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'API error') }
+    const data = await res.json()
+    if (!data.result) throw new Error('Empty response from API')
+    const html = cleanHTML(data.result)
+    if (!html.includes('<') || !html.includes('>')) throw new Error('Invalid HTML returned')
+    loadHTMLIntoEditor(html)
+    setStatus('live', '✓ Store ready — edit below')
+    showToast('✅ Store generated! Now drag & drop to customize.', 'ok')
+    document.getElementById('sb-store-name').textContent = description.substring(0, 30)
+  } catch(err) {
+    setStatus('', 'Error'); showToast('❌ ' + (err.message || 'Build failed'), 'err')
+  } finally {
+    showLoading(false); btn.disabled = false; btn.innerHTML = '⚡ Regenerate'
+  }
+}
+
+// ── AI REFINE ──
+async function refineWithAI() {
+  if (!isBuilt) { showToast('⚠️ Generate a store first', 'err'); return }
+  const instruction = document.getElementById('refine-input').value.trim()
+  if (!instruction) { showToast('⚠️ Describe what to change', 'err'); return }
+  const btn = document.getElementById('refine-btn')
+  btn.disabled = true; btn.textContent = '⏳ Refining…'
+  showLoading(true)
+  try {
+    const currentHTML = getHTMLFromEditor()
+    const res = await fetch('/api/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'refine', html: currentHTML, instruction })
+    })
+    if (!res.ok) throw new Error('Refine failed')
+    const data = await res.json()
+    loadHTMLIntoEditor(cleanHTML(data.result))
+    document.getElementById('refine-input').value = ''
+    showToast('✨ Store updated!', 'ok')
+  } catch(e) {
+    showToast('❌ ' + e.message, 'err')
+  } finally {
+    showLoading(false); btn.disabled = false; btn.textContent = '✨ Apply Refinement'
+  }
+}
+
+// ── SAVE ──
+async function saveStore() {
+  if (!isBuilt && !editor?.getHtml()) { showToast('⚠️ Generate a store first', 'err'); return }
+  if (!currentUser) { showToast('⚠️ Please sign in', 'err'); return }
+  const description = document.getElementById('prompt-input').value.trim()
+  const storeName = document.getElementById('sb-store-name').textContent || description.substring(0, 40) || 'My Store'
+  const html = getHTMLFromEditor()
+  try {
+    if (currentStoreId) {
+      const { error } = await _supabase.from('stores').update({
+        name: storeName, html_content: html, status: 'live', updated_at: new Date().toISOString()
+      }).eq('id', currentStoreId)
+      if (error) throw error
+    } else {
+      const { data, error } = await _supabase.from('stores').insert({
+        user_id: currentUser.id, name: storeName, html_content: html, status: 'live', description
+      }).select().single()
+      if (error) throw error
+      currentStoreId = data.id
+    }
+    document.getElementById('view-btn').style.display = 'flex'
+    showToast('💾 Saved! Your store is now live.', 'ok')
+    setStatus('live', '✓ Live')
+  } catch(e) { showToast('❌ Save failed: ' + e.message, 'err') }
+}
+
+// ── VIEW STORE ──
+function viewStore() {
+  if (!currentStoreId) { showToast('⚠️ Save your store first', 'err'); return }
+  const url = `${window.location.origin}/store.html?id=${currentStoreId}`
+  window.open(url, '_blank')
+}
+
+// ── EXPORT ──
+function exportHTML() {
+  if (!isBuilt) { showToast('⚠️ Generate a store first', 'err'); return }
+  const html = getHTMLFromEditor()
+  const blob = new Blob([html], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = slugify(document.getElementById('prompt-input').value || 'store') + '.html'; a.click()
+  URL.revokeObjectURL(url)
+  showToast('⬇ Downloaded!', 'ok')
+}
+
+// ── HELPERS ──
+function cleanHTML(text) {
+  return text.replace(/^```html\n?/i,'').replace(/^```\n?/,'').replace(/\n?```$/,'').trim()
+}
+function slugify(str) {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,40) || 'store'
+}
+function setStatus(type, text) {
+  document.getElementById('status-dot').className = 'status-dot' + (type === 'live' ? ' live' : '')
+  document.getElementById('status-text').textContent = text
+}
+function showToast(msg, type = 'ok') {
+  const t = document.getElementById('toast'); t.textContent = msg; t.className = `toast show ${type}`
+  clearTimeout(t._to); t._to = setTimeout(() => t.classList.remove('show'), 3800)
+}
+function showLoading(show) {
+  document.getElementById('loading-overlay').classList.toggle('show', show)
+  if (!show) { clearTimeout(stepTimer); ['ls1','ls2','ls3','ls4','ls5'].forEach(id => { const el=document.getElementById(id); if(el) el.classList.remove('active','done') }) }
+}
+function startSteps() {
+  const steps = ['ls1','ls2','ls3','ls4','ls5']; let i = 0
+  function next() {
+    if (i > 0) { const prev = document.getElementById(steps[i-1]); if(prev) { prev.classList.remove('active'); prev.classList.add('done') } }
+    if (i < steps.length) { document.getElementById(steps[i])?.classList.add('active'); i++; stepTimer = setTimeout(next, 4500) }
+  }
+  next()
+}
+
+// ── KEYBOARD ──
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('prompt-input').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) generateWithAI() })
+  document.getElementById('p-name').addEventListener('keydown', e => { if (e.key === 'Enter') addProduct() })
+  document.getElementById('p-price').addEventListener('keydown', e => { if (e.key === 'Enter') addProduct() })
+})
+</script>
+</body>
+</html>

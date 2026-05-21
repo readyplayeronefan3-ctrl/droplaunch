@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loading store…</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0A0A0B; --white: #F5F5F2; --muted: #666662;
+  --accent: #C8F135; --accent-t: #0A0A0B;
+  --green: #4ade80; --red: #FF5C3A;
+  --font-d: 'Syne', sans-serif; --font-b: 'DM Sans', sans-serif;
+}
+html, body { height: 100%; margin: 0; padding: 0; }
+body { background: var(--bg); font-family: var(--font-b); display: flex; flex-direction: column; }
+
+/* Store bar shown above the store */
+.store-bar {
+  height: 44px; flex-shrink: 0; display: flex; align-items: center;
+  justify-content: space-between; padding: 0 16px;
+  background: #0A0A0B; border-bottom: 1px solid rgba(255,255,255,0.08);
+  gap: 12px; z-index: 100;
+}
+.sb-logo { font-family: var(--font-d); font-size: 15px; font-weight: 800; letter-spacing: -0.03em; display: flex; align-items: center; gap: 6px; text-decoration: none; color: var(--white); }
+.sb-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+.sb-store-name { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.sb-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 100px; }
+.sb-badge.live { background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+.sb-badge.draft { background: rgba(255,255,255,0.06); color: var(--muted); border: 1px solid rgba(255,255,255,0.1); }
+.sb-actions { display: flex; gap: 8px; align-items: center; }
+.sb-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--white); padding: 6px 12px; border-radius: 6px; font-family: var(--font-b); font-size: 11px; cursor: pointer; transition: background 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.sb-btn:hover { background: rgba(255,255,255,0.12); }
+.sb-btn.primary { background: var(--accent); color: var(--accent-t); border-color: transparent; font-weight: 600; }
+.sb-btn.primary:hover { opacity: 0.88; }
+
+/* Store iframe */
+#store-frame { flex: 1; border: none; width: 100%; display: none; }
+
+/* States */
+.state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; }
+.state-icon { font-size: 52px; margin-bottom: 16px; opacity: 0.6; }
+.state h1 { font-family: var(--font-d); font-size: 24px; font-weight: 700; color: var(--white); margin-bottom: 8px; letter-spacing: -0.03em; }
+.state p { font-size: 14px; color: var(--muted); max-width: 360px; line-height: 1.6; margin-bottom: 24px; }
+.state a { background: var(--accent); color: var(--accent-t); padding: 10px 24px; border-radius: 7px; font-family: var(--font-b); font-size: 13px; font-weight: 600; text-decoration: none; display: inline-block; }
+.state a:hover { opacity: 0.88; }
+
+/* Loading spinner */
+.spinner { width: 40px; height: 40px; border: 3px solid rgba(200,241,53,0.15); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.75s linear infinite; margin-bottom: 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Toast */
+.toast { position: fixed; bottom: 20px; right: 20px; background: #161618; border: 1px solid rgba(255,255,255,0.13); border-radius: 8px; padding: 10px 16px; font-size: 13px; color: var(--white); z-index: 9999; transform: translateY(60px); opacity: 0; transition: all 0.25s ease; pointer-events: none; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.ok { border-color: rgba(74,222,128,0.3); }
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap');
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="store-bar" id="store-bar" style="display:none">
+  <a href="index.html" class="sb-logo"><span class="sb-dot"></span>DropLaunch</a>
+  <div class="sb-store-name">
+    <span id="sb-name">Store</span>
+    <span class="sb-badge draft" id="sb-badge">Draft</span>
+  </div>
+  <div class="sb-actions">
+    <button class="sb-btn" onclick="copyLink()">🔗 Copy Link</button>
+    <a href="builder.html" class="sb-btn">✏️ Edit Store</a>
+    <a href="dashboard.html" class="sb-btn primary">← Dashboard</a>
+  </div>
+</div>
+
+<!-- STORE IFRAME -->
+<iframe id="store-frame" title="Store preview" allowfullscreen></iframe>
+
+<!-- LOADING STATE -->
+<div class="state" id="state-loading">
+  <div class="spinner"></div>
+  <h1>Loading your store…</h1>
+  <p>Just a moment</p>
+</div>
+
+<!-- NOT FOUND STATE -->
+<div class="state" id="state-notfound" style="display:none">
+  <div class="state-icon">🏪</div>
+  <h1>Store not found</h1>
+  <p>This store doesn't exist or hasn't been published yet. Make sure you have the right link.</p>
+  <a href="index.html">← Back to DropLaunch</a>
+</div>
+
+<!-- ERROR STATE -->
+<div class="state" id="state-error" style="display:none">
+  <div class="state-icon">⚠️</div>
+  <h1>Something went wrong</h1>
+  <p id="error-msg">We couldn't load this store. Please try again.</p>
+  <a href="javascript:window.location.reload()">Try again</a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const _supabase = supabase.createClient(
+  'https://zjsvctzkavpehosjqsgj.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpqc3ZjdHprYXZwZWhvc2pxc2dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDQwMzAsImV4cCI6MjA5NDYyMDAzMH0.4FhKatrf-2lvMF5H5jS3wmXz7K3oL3nciiekCOm7WXs'
+)
+
+function showState(id) {
+  ['state-loading','state-notfound','state-error'].forEach(s => {
+    document.getElementById(s).style.display = s === id ? 'flex' : 'none'
+  })
+}
+
+function showToast(msg, type = 'ok') {
+  const t = document.getElementById('toast')
+  t.textContent = msg; t.className = `toast show ${type}`
+  clearTimeout(t._to); t._to = setTimeout(() => t.classList.remove('show'), 3000)
+}
+
+function copyLink() {
+  const url = window.location.href
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('🔗 Link copied to clipboard!', 'ok')
+  }).catch(() => {
+    // Fallback for browsers without clipboard API
+    const ta = document.createElement('textarea')
+    ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0'
+    document.body.appendChild(ta); ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+    showToast('🔗 Link copied!', 'ok')
+  })
+}
+
+async function loadStore() {
+  // Get store ID from URL
+  const params = new URLSearchParams(window.location.search)
+  const storeId = params.get('id')
+
+  if (!storeId) {
+    showState('state-notfound')
+    return
+  }
+
+  try {
+    // Fetch store from Supabase (public read)
+    const { data: store, error } = await _supabase
+      .from('stores')
+      .select('id, name, html_content, status, user_id')
+      .eq('id', storeId)
+      .single()
+
+    if (error || !store) {
+      showState('state-notfound')
+      return
+    }
+
+    if (!store.html_content || store.html_content.trim().length < 50) {
+      showState('state-notfound')
+      return
+    }
+
+    // Update page title
+    document.title = (store.name || 'Store') + ' — DropLaunch'
+
+    // Update store bar
+    document.getElementById('sb-name').textContent = store.name || 'Untitled Store'
+    const badge = document.getElementById('sb-badge')
+    badge.textContent = store.status === 'live' ? 'Live' : 'Draft'
+    badge.className = 'sb-badge ' + (store.status === 'live' ? 'live' : 'draft')
+    document.getElementById('store-bar').style.display = 'flex'
+
+    // Render store HTML in iframe via blob URL
+    const blob = new Blob([store.html_content], { type: 'text/html; charset=utf-8' })
+    const blobUrl = URL.createObjectURL(blob)
+    const frame = document.getElementById('store-frame')
+    frame.onload = () => {
+      showState(null)
+      document.querySelectorAll('.state').forEach(s => s.style.display = 'none')
+      frame.style.display = 'block'
+      // Clean up blob URL after load
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000)
+    }
+    frame.onerror = () => {
+      showState('state-error')
+    }
+    frame.src = blobUrl
+
+  } catch(err) {
+    document.getElementById('error-msg').textContent = err.message || 'Unknown error'
+    showState('state-error')
+  }
+}
+
+// Start loading when page is ready
+window.addEventListener('DOMContentLoaded', loadStore)
+</script>
+</body>
+</html>
